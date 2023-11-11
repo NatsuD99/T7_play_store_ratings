@@ -13,15 +13,15 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 ## Import Data
 # %%
 # Run this just once, and then, comment out the code in this cell.
-od.download("https://www.kaggle.com/datasets/gauthamp10/google-playstore-apps")
+# od.download("https://www.kaggle.com/datasets/gauthamp10/google-playstore-apps")
 
 
 # %%
-df = pd.read_csv("google-playstore-apps/Google-Playstore.csv")
-df.head()
-
+#df = pd.read_csv("google-playstore-apps/Google-Playstore.csv")
+#df.head()
+df.tail()
 # %% [markdown]
-## Data Explorartion
+# Data Explorartion
 # %%
 df.shape
 # %%
