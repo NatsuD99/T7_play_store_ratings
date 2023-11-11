@@ -13,12 +13,11 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 ## Import Data
 # %%
 # Run this just once, and then, comment out the code in this cell.
-# od.download_kaggle_dataset("https://www.kaggle.com/datasets/gauthamp10/google-playstore-apps",
-#                            data_dir="C://Play_Store_Data")
+od.download("https://www.kaggle.com/datasets/gauthamp10/google-playstore-apps")
 
 
 # %%
-df = pd.read_csv("C:\Play_Store_Data\google-playstore-apps\Google-Playstore.csv")
+df = pd.read_csv("google-playstore-apps/Google-Playstore.csv")
 df.head()
 
 # %% [markdown]
@@ -41,5 +40,16 @@ df.isna().sum()
 # %%
 df[df['App Name'].isna()]
 # %%
-df['App Name'].duplicated()
+df['App Name'].duplicated().sum()
 # %%
+# %%
+df['App Id'].isna().sum()
+# %%
+df['App Id'].duplicated().sum()
+# %%
+df[df['App Name'].duplicated()][['App Name', 'App Id']].head(10)
+
+# %% [markdown]
+# So, we notice that there are no missing app IDs and none of the app IDs are duplicated as well.
+# There are multiple apps with same names but the ID is different, so it fine.
+# App Id, will thus be used as our primary key.
