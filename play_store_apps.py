@@ -61,7 +61,7 @@ df_clean.isna().sum()
 # %% [markdown]
 # There are 22883 apps that do not have a rating or a rating count. 
 # Our ultimate target is to predict rating of an app. So imputing the missing values, no matter how good, isn't original. 
-# With 2+ million data, we can affort to drop 22k records. So, let's do that.
+# With 2+ million data, we can afford to drop 22k records. So, let's do that.
 # %%
 df_clean = df_clean.dropna(subset=['Rating'])
 df_clean = df_clean.dropna(subset=['Rating Count'])
@@ -86,12 +86,6 @@ df_clean['Installs'].equals(df_clean['Minimum Installs'].astype('int64'))
 df_clean = df_clean.drop('Installs', axis=1)
 # %%
 df_clean.isna().sum()
-# %% 
-# #32 instances
-df_clean = df.dropna(subset=['Developer Id','Developer Email'])
-df_clean.isna().sum()
-# %%
-# %%
 # %%[markdown]
 #Here we will concentrate on the currency column.
 print(df_clean['Currency'].isna())
@@ -246,4 +240,3 @@ df_clean['Minimum Android'].value_counts()
 # %%
 df_clean['Minimum Android'].isna().sum()
 # %%
-
