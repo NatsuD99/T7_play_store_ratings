@@ -86,6 +86,10 @@ df_clean['Installs'].equals(df_clean['Minimum Installs'].astype('int64'))
 df_clean = df_clean.drop('Installs', axis=1)
 # %%
 df_clean.isna().sum()
+# #32 instances
+#%%
+df_clean = df.dropna(subset=['Developer Id','Developer Email'])
+df_clean.isna().sum()
 # %%[markdown]
 #Here we will concentrate on the currency column.
 print(df_clean['Currency'].isna())
