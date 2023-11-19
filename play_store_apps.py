@@ -87,8 +87,10 @@ df_clean['Installs'].equals(df_clean['Minimum Installs'].astype('int64'))
 df_clean = df_clean.drop('Installs', axis=1)
 # %%
 df_clean.isna().sum()
-# 32 & 31instances of NA value in Developer Id and Email respectively
-#%%
+# 32 & 31 instances of NA value in Developer Id and Email respectively
+# %%
+## Processing the three string variables 'Developer Id','Developer Email' and 'Developer Website'
+# 'Developer Website' has 760831 NA values and so I have chosen not to drop those since it might result in significant data loss.
 df_clean = df_clean.dropna(subset=['Developer Id','Developer Email'])
 df_clean.isna().sum()
 # %%[markdown]
