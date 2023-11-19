@@ -8,7 +8,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 
-# %% [markdown]
+
+ # %% [markdown]
 ## Import Data
 # %%
 # Uncomment, run this just once, and then, comment out the code in this cell.
@@ -248,4 +249,8 @@ df_clean['Minimum Android'].value_counts()
 df_clean['Minimum Android'].isna().sum()
 # %%
 df_clean.isna().sum()
-# %%
+# %%[markdown]
+# We notice that Developer website and privacy policy have too much NA values. 
+# Released column has 48371 NA values. We are not going to use these columns for model building.
+# But, we'll be using these for analysis and feature engineering going ahead.
+# So for now, we'll keep the missing values since it doesn't pose an issue.
