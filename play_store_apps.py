@@ -51,7 +51,7 @@ df[df['App Name'].duplicated()][['App Name', 'App Id']].head(10)
 # %% [markdown]
 ## Handling Missing values 
 # So, we notice that there are no missing app IDs and none of the app IDs are duplicated as well.
-# There are multiple apps with same names but the ID is different, so it fine.
+# There are multiple apps with same names but the ID is different, so it's fine.
 # App Id, will thus be used as our primary key. 
 # The 5 records in which the app name are missing, we'll remove those.
 
@@ -83,36 +83,37 @@ df_clean['Installs'].equals(df_clean['Minimum Installs'].astype('int64'))
 # %% [markdown]
 # So both the columns have same values. The meaning of both the feature is also more or less the same.
 # So, we will drop one of them.
+# %%
 df_clean = df_clean.drop('Installs', axis=1)
 # %%
 df_clean.isna().sum()
-# #32 instances
+# 32 & 31instances of NA value in Developer Id and Email respectively
 #%%
-df_clean = df.dropna(subset=['Developer Id','Developer Email'])
+df_clean = df_clean.dropna(subset=['Developer Id','Developer Email'])
 df_clean.isna().sum()
 # %%[markdown]
-#Here we will concentrate on the currency column.
-print(df_clean['Currency'].isna())
-print(df_clean['Currency'].isna().sum())
-#The above code leads to the conclusion that there are 20 nan values 
-# in the currency column
+# Now let's concentrate on the currency column which has 20 nan values.
 # %%
-print(df_clean['Currency'].unique())
-#The various currencies are:'USD': United States Dollar,'CAD': Canadian Dollar
+print(df_clean['Currency'].value_counts())
+# The various currencies are:
+# 'USD': United States Dollar,'CAD': Canadian Dollar
 # 'EUR': Euro 'INR': Indian Rupee 'VND': Vietnamese Dong
 # 'GBP': British Pound Sterling  'BRL': Brazilian Real
 # 'KRW': South Korean Won  'TRY': Turkish Lira
 # 'SGD': Singapore Dollar 'AUD': Australian Dollar
 # 'ZAR': South African Rand
-#We have'XXX':# This is a special code used to denote that no specific currency
+# We have'XXX':# This is a special code used to denote that no specific currency
 # is involved. It's often used in financial contexts to represent a placeholder
 # or a non-standard situation.
-#%%[Hadling nan values of currency column]
-df_clean = df.dropna(subset=['Currency'])
-df_clean.isna().sum()
-#So we dropped the 20 nan values for currency column
 
-#%%[markdown]
+# We also notice that the vast majority is USD, some XXX and 
+# countable number of records for the rest of the currencies. 
+# We'll deal with this properly during data cleaning.
+# %%[Handling nan values of currency column]
+df_clean = df_clean.dropna(subset=['Currency'])
+df_clean.isna().sum()
+
+# %%[markdown]
 # Preprocessing the size column
 print(df_clean['Size'].isna().sum())
 df_clean['Size'].unique()
@@ -162,7 +163,7 @@ def convert_m_to_kb(x):
 # Convert 'M' or 'm' to kilobytes
 df_clean['Size'] = df_clean['Size'].astype(str).apply(convert_m_to_kb)
 x = (df_clean['Size'] == 'm') | (df_clean['Size'] == 'M')
-#Once we have created the boolean mask x, you can use x.sum() 
+# Once we have created the boolean mask x, you can use x.sum() 
 # to count the number of True values in the mask. 
 # In the context of above conversion, x.sum() would give me
 # the total count of rows where the 'size' column is either 'm' or 'M'
@@ -173,7 +174,7 @@ df_clean['Size']
 
 
 #%%[markdown]
-#Here I am coverting apps of size k(kilobytes) into 
+# Here I am coverting apps of size k(kilobytes) into 
 # numeric value of the given kilobytes(k) in the datframe
 def convert_k_to_numeric(x):
     try:
@@ -186,7 +187,7 @@ def convert_k_to_numeric(x):
 # Convert 'K' or 'k' to numeric value of kilobytes
 df_clean['Size'] = df_clean['Size'].astype(str).apply(convert_k_to_numeric)
 y = (df_clean['Size'] == 'k') | (df_clean['Size'] == 'K')
-#Once we have created the boolean mask y, we can use y.sum() 
+# Once we have created the boolean mask y, we can use y.sum() 
 # to count the number of True values in the mask. 
 # In the context of above conversion, y.sum() would give me
 # the total count of rows where the 'size' column is either 'k' or 'K'
@@ -196,8 +197,8 @@ print(f"Count of 'k' or 'K' in the 'size' column: {count_of_k_or_K}")
 df_clean['Size']
 
 
-#%%[markdown]
-##Here I am coverting apps of size G(Gigabytes) 
+# %%[markdown]
+# Here I am coverting apps of size G(Gigabytes) 
 # into their corresponding values in kilobytes(k)
 def convert_g_to_numeric(x):
     if 'G' in x or 'g' in x:
@@ -207,7 +208,7 @@ def convert_g_to_numeric(x):
 # Convert 'G' or 'g' to kilobytes
 df_clean['Size'] = df_clean['Size'].astype(str).apply(convert_g_to_numeric)
 z = (df_clean['Size'] == 'g') | (df_clean['Size'] == 'G')
-#Once we have created the boolean mask z, we can use z.sum() 
+# Once we have created the boolean mask z, we can use z.sum() 
 # to count the number of True values in the mask. 
 # In the context of above conversion, z.sum() would give me
 # the total count of rows where the 'size' column is either 'g' or 'G'
@@ -216,14 +217,14 @@ count_of_g_or_G = z.sum()
 print(f"Count of 'g' or 'G' in the 'size' column: {count_of_g_or_G}")
 df_clean['Size']
 
-#%%
+# %%
 varieswithdevice_nan=0
 for values in df_clean['Size']:
     if str(values) =='Varies with device' or str(values)=='nan':
         varieswithdevice_nan += 1
-#After preprocessing , cleaning and converting the above rows 
+# After preprocessing , cleaning and converting the above rows 
 # to Kilobytes as the base value I have kept the total no of string 
-# values for "varies with device" and "nan" umtampered    
+# values for "varies with device" and "nan" untampered    
 if count_varieswithdevice_nan == varieswithdevice_nan:
     print("Unaltered before and after preprocessing")
 
@@ -243,4 +244,6 @@ df_clean['Minimum Android'].value_counts()
 
 # %%
 df_clean['Minimum Android'].isna().sum()
+# %%
+df_clean.isna().sum()
 # %%
