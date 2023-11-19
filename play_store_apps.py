@@ -247,10 +247,30 @@ df_clean['Minimum Android'].value_counts()
 
 # %%
 df_clean['Minimum Android'].isna().sum()
-# %%
+# %%[markdown]
+#Since we have 6526 rows consisting of nan we can afford
+# to drop it .Considering the amount of data we have it should not posess a problem
+df_clean = df_clean.dropna(subset=['Minimum Android'])
+df_clean.isna().sum()
+
+
 df_clean.isna().sum()
 # %%[markdown]
 # We notice that Developer website and privacy policy have too much NA values. 
 # Released column has 48371 NA values. We are not going to use these columns for model building.
 # But, we'll be using these for analysis and feature engineering going ahead.
 # So for now, we'll keep the missing values since it doesn't pose an issue.
+
+# %%[markdown]
+#Exploratory Data Analysis
+#1-Data Cleaning
+#2-Feature Engineering
+#3-Visualisation
+#[These are the three things will focus in Eda]
+             
+             
+             
+             
+             
+             
+
