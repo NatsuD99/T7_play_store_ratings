@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 
+sns.set_palette('ocean_r')
+
 
  # %% [markdown]
 ## Import Data
@@ -268,9 +270,85 @@ df_clean.isna().sum()
 #3-Visualisation
 #[These are the three things will focus in Eda]
              
-             
-             
-             
-             
-             
+# %%
+print(df_clean['Category'].nunique())
+sns.histplot(data=df_clean, x='Category', kde=True, )
+plt.xticks(rotation = 90, size = 6)
+plt.show()
+# We notice that there are 48 different categories, and education category has the highest count.
+# The distribution is very uneven with a right tail.
+# There are many categories with very less values.
+# Let's take a look at the values once
+# %%
+df_clean['Category'].value_counts(normalize=True)
+# On having a clearer look at the data we notice that there are some categories with minor
+# spelling changes which are the same. Ex: 'Education' and 'Educational'.
+# Lets clean such categories by combining the values into one.
+# %%
+df_clean['Category'] = df_clean['Category'].str.replace('Educational', 'Education')
+df_clean['Category'] = df_clean['Category'].str.replace('Music & Audio', 'Music')
+# %%
+# Now let's take a look at the top 10 categories
+top10cat = ['Education', 'Music', 'Business', 'Tools', 
+            'Entertainment', 'Lifestyle', 'Books & Reference',
+            'Personalization', 'Health & Fitness', 'Productivity']
+df_top10cat= df_clean[df_clean['Category'].isin(top10cat)]
+df_top10cat['Category'].value_counts(normalize=True).plot.barh()
+plt.show()
+# %% [markdown]
+# So the Education category apps take up about 20% of all the apps.
+# %%
+# Now let's take a look at the app ratings.
+sns.histplot(x='Rating', data=df_clean, bins=20, kde=True)
+plt.show()
+# Interestingly, we observe that a huge number of apps have 0 rating.
+# Let's 1st get a better visual by omitting those
+# %%
+sns.histplot(x='Rating', data=df_clean[df_clean['Rating']>0], 
+             bins=20, kde=True)
+plt.show()
+# We get a better idea from this that most of the apps have a rating b/w 3.5-5
 
+# %%
+# Now let's check the number of ratings.
+df_clean['Rating Count'].describe().apply('{:.5f}'.format)
+# Whoa!! Too high standard deviation and 75% of data is below 42 
+# while the maximum vlaue is greater than 1.3 million.
+# Let's 1st try to see the entire plot and then we'll see only the ones
+# below 42 to get a better idea
+# %%
+sns.histplot(x='Rating Count', data=df_clean, bins=20)
+plt.show()
+# %%[markdown]
+# Okay!, so we don't even see anything here.
+# %%
+sns.histplot(x='Rating Count', data=df_clean[df_clean['Rating Count']<42], bins=20)
+plt.show()
+# This shows that majority of apps don't even get any ratings.
+# And just a few get over hundreds and thousands of ratings.
+# %%
+# The maximum value in the above plot show 1e6, i.e., a million.
+# Let's see how many apps have over a million ratings
+len(df_clean[df_clean['Rating Count']>1e6])
+# %%[markdown]
+# Just 829 of 2 million+ apps have over a million ratings.
+
+# %%
+# Let's try to see apps from which category have higher ratings,
+# and which are the categories that get rated the most.
+df_clean[df_clean['Rating']>3.5]['Category'].value_counts().head().plot.barh()
+# So the education category has the higest rated apps.
+# %%
+df_clean[df_clean['Rating Count']>1e6]['Category'].value_counts().head(6).plot.barh()
+# Action apps have the most number of ratings. 
+# 74 of total apps with more than a million reviews belong to action category. These could be the action games which are super popular.
+# Sports and music have the same number of ratings and are in top 5.
+# Tools category also has 54 apps over a million reviews. These could be the productivity tool apps that many people use on a regular basis.
+# Lets just see some of these apps.
+# %%
+df_clean[df_clean['Rating Count']>1e6][df_clean['Category']=='Action'][['App Name', 'Rating', 'Rating Count']].head(10)
+# As we suspected, it's the most popular action games, such as Shadow Fight 2, PUBG, Among Us, etc.
+
+# %%
+df_clean.head()
+# %%
