@@ -350,5 +350,11 @@ df_clean[df_clean['Rating Count']>1e6][df_clean['Category']=='Action'][['App Nam
 # As we suspected, it's the most popular action games, such as Shadow Fight 2, PUBG, Among Us, etc.
 
 # %%
-df_clean.head()
+df_clean['Minimum Installs'].value_counts(normalize=True).plot.barh()
+# On checking the install count, we see that the majority of apps fall 
+# in the install range of 10 to 10,000.
+# %%
+df_clean['Maximum Installs'].describe()
+# We don't really get much information from this. 
+
 # %%
