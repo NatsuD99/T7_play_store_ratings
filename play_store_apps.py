@@ -268,7 +268,7 @@ df_clean.isna().sum()
 #1-Data Cleaning
 #2-Feature Engineering
 #3-Visualisation
-#[These are the three things will focus in Eda]
+#[These are the three things will focus on in Eda]
              
 # %%
 print(df_clean['Category'].nunique())
@@ -514,4 +514,46 @@ plt.ylabel('Number of Apps')
 plt.tight_layout()
 plt.show()
 
+# dev id, dev website, dev email, released, last updated, content rating
+df_clean['Content Rating'].value_counts()
+# %%
+# Upon running the value counts function on the Content Rating column, it is observed that
+# there are a total of six categories under which the apps have been sub-divided.
+# The names of the categories seem to be a bit confusing ('Everyone'/ 'Everyone 10+'), so we'll provide better distinction to each.
+df_clean['Content Rating'] = df_clean['Content Rating'].replace('Mature 17+', '17+')
+df_clean['Content Rating'] = df_clean['Content Rating'].replace('Everyone 10+', '10+')
+df_clean['Content Rating'] = df_clean['Content Rating'].replace('Adults only 18+', '18+')
+# %%
+df_clean['Content Rating'].value_counts(normalize=True).plot.barh()
+# df_clean["Content Rating"]
+# %%
+df_clean['Last Updated'].head()
+# %%
+def splice_string(original_string, start, end=None):
+    if end is None:
+        return original_string[start:]
+    else:
+        return original_string[start:end]
+# %%
+df_clean['Last Updated'] = df_clean['Last Updated'].apply(lambda x: splice_string(x,8, ))
+# %%
+df_clean['Last Updated'] = df_clean['Last Updated'].astype(int)
+# %%
+df_clean['Last Updated'].max()
+df_clean['Last Updated'].min()
+# %%
+sns.boxenplot(y="Last Updated", data=df_clean, palette="crest")
+plt.ylabel("Year Last Updated")
+# %%
+# df_clean["Rating"].head(10)
+# %%
+sns.stripplot(x='Content Rating', y='Rating', data=df_clean, palette="crest_r")
+plt.title('Scatter Plot between Content Rating and Rating')
+plt.ylabel('Rating')
+plt.xlabel('Content Rating')
+# %%
+sns.stripplot(x='Last Updated', y='Rating', data=df_clean, palette="magma")
+plt.title('Scatter Plot between Year of Last Update and Rating')
+plt.ylabel('Rating')
+plt.xlabel('Year Last Updated')
 # %%
