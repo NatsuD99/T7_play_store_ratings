@@ -358,6 +358,162 @@ df_clean['Maximum Installs'].describe()
 # We don't really get much information from this. 
 
 # %%
+#Handling : 
+#Relased col, Privacy policy, ad-supported, in app purchases, editors choice and scraped time
+# %%
+#released column
+sample_values1 = df['Released'].sample(n=20)
+print(sample_values1)
+
+# %%
+# Imputing the missing values of released column  with median date 
+df['Released'] = pd.to_datetime(df['Released'], errors='coerce')
+median_date = df['Released'].median()  # Calculate the median date
+df['Released'].fillna(median_date, inplace=True)
+df['Released'].isna().sum() #recheking for missing values
+
+# %%
+#Calculating age of the app, by extracting the release date from the current date
+
+df['Year Released']= df['Released'].dt.year #extracting year, month and day
+df['Month Released']= df['Released'].dt.month
+df['Day of week Released']= df['Released'].dt.dayofweek
+
+current_date=pd.to_datetime('now')
+df['App Age'] = round((current_date - df['Released']).dt.days / 365.25,2) if pd.__version__ >= '1.1.0' else (current_date - df['Released']).days / 365.25
+#print(df['App Age'])
+# %%
+#visualization of released column
+#exploring distribution of app over the ages
+
+plt.figure(figsize=(10,6))
+sns.countplot(x= 'Year Released', data= df,hue='Year Released', legend=False, palette = 'viridis')
+plt.title('Distribution of App Releases Over the Years')
+plt.xlabel('Year Released')
+plt.ylabel('Number of Apps')
+plt.show()
+
+#Line plot with aggregated counts
+plt.figure(figsize=(12, 6))
+df['Year Released'].value_counts().sort_index().plot(kind='line', marker='o', color='skyblue')
+plt.title('Trend of App Releases Over the Years')
+plt.xlabel('Year Released')
+plt.ylabel('Number of Apps')
+plt.show()
+
+# %%
+#Privacy column
+#Handling missing values
+df['Privacy Policy'].isnull().sum()
+df['Privacy Policy'].fillna('Not Available', inplace = True) #Imputing missing value
+
+# %%
+#Creating a binary feature indicating whether the app has a privacy policy or not
+df['Has_PrivacyPolicy']= df['Privacy Policy'].apply(lambda x: 1 if x != 'Not Available' else 0)
+df['Has_PrivacyPolicy']
+
+# %%
+#visualizing distribution of apps with and without privacy policy 
+
+counts = df['Has_PrivacyPolicy'].value_counts()
+
+plt.figure(figsize=(8, 5))
+counts.plot(kind='bar', color=['skyblue', 'orange'])
+plt.title('Distribution of Apps with and without Privacy Policies')
+plt.xlabel('Has Privacy Policy')
+plt.ylabel('Number of Apps')
+plt.xticks(rotation=0)  
+plt.show()
+
+# %%
+#df['Ad Supported'].head(10)
+ad_support_counts = df['IsAdSupported'].value_counts()
+ad_support_counts
+# %%
+#Ad-supported Column
+df['Ad Supported'].isnull().sum()
+df['IsAdSupported'] = df['Ad Supported']
+
+# %%
+#Visualization of number of apps ad supported vs not supported 
+plt.figure(figsize=(8, 5))
+sns.countplot(x='IsAdSupported', data=df, palette='viridis',legend= False, hue= 'IsAdSupported')
+plt.title('Distribution of Apps with and without Ad Support')
+plt.xlabel('Is Ad Supported')
+plt.ylabel('Number of Apps')
+plt.show()
+
+#Number of apps ad supported are almost the same as that not ad supported
+
+# %%
+df['In App Purchases'].isnull().sum()
+plt.figure(figsize=(8, 5))
+sns.countplot(x='In App Purchases', data=df, palette='viridis',hue= 'In App Purchases',legend= False)
+plt.title('Distribution of Apps with and without In-App Purchases')
+plt.xlabel('In App Purchases')
+plt.ylabel('Number of Apps')
+plt.show()
+
+# %%
+#Exploring Editor's Choice App
+
+df['Editors Choice'].isnull().sum()
+df['Editors Choice'].head(10)
+Editor_counts = df['Editors Choice'].value_counts()
+print(Editor_counts)
+
+# %%
+
+#Visulization of the Editor's choice app
+
+plt.figure(figsize=(8, 5))
+sns.countplot(x='Editors Choice', data=df, palette='viridis',legend= False, hue = 'Editors Choice')
+
+plt.yscale('log') # Setting y-axis to log scale for better visualization if needed
+
+plt.title("Distribution of Apps as Editor's Choice or Not")
+plt.xlabel("Is Editor's Choice")
+plt.ylabel('Number of Apps')
+plt.show()
+
+# %%
+#Exploring Scraped Time column and visualization of the Scraped time column
+
+df['Scraped Time'].head(10)
+df['Scraped Time'].isnull().sum()
+df['Scraped Time'] = pd.to_datetime(df['Scraped Time'], errors='coerce')
+
+# Creating a time series plot of the number of apps scraped over time
+plt.figure(figsize=(12, 6))
+df.groupby('Scraped Time').size().plot(title='Time Series of App Scraping', color='skyblue')
+plt.xlabel('Scraped Time')
+plt.ylabel('Number of Apps')
+plt.show()
+
+# %%
+#Creating a time series chart to observe patterns in the scraping time over different time periods
+
+df['DayOfWeek'] = df['Scraped Time'].dt.day_name() #Extracting day of the week and hour
+df['HourOfDay'] = df['Scraped Time'].dt.hour
+plt.figure(figsize=(14, 8))
+
+# Time series plot for Day of the Week
+plt.subplot(2, 1, 1)
+sns.countplot(x='DayOfWeek', data=df, palette='viridis', order=['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],legend= False, hue= 'DayOfWeek')
+plt.title('Number of Apps Scraped by Day of the Week')
+plt.xlabel('Day of the Week')
+plt.ylabel('Number of Apps')
+
+# Time series plot for Hour of the Day
+plt.subplot(2, 1, 2)
+sns.countplot(x='HourOfDay', data=df, palette='viridis', legend= False, hue= 'HourOfDay' )
+plt.title('Number of Apps Scraped by Hour of the Day')
+plt.xlabel('Hour of the Day')
+plt.ylabel('Number of Apps')
+
+plt.tight_layout()
+plt.show()
+
 # dev id, dev website, dev email, released, last updated, content rating
 df_clean['Content Rating'].value_counts()
 # %%
