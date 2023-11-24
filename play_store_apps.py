@@ -264,11 +264,11 @@ df_clean.isna().sum()
 # So for now, we'll keep the missing values since it doesn't pose an issue.
 
 # %%[markdown]
-#Exploratory Data Analysis
-#1-Data Cleaning
-#2-Feature Engineering
-#3-Visualisation
-#[These are the three things will focus on in Eda]
+# Exploratory Data Analysis
+# 1-Data Cleaning
+# 2-Feature Engineering
+# 3-Visualisation
+# [These are the three things will focus on in Eda]
              
 # %%
 print(df_clean['Category'].nunique())
@@ -358,22 +358,21 @@ df_clean['Maximum Installs'].describe()
 # We don't really get much information from this. 
 
 # %%
-#Handling : 
-#Relased col, Privacy policy, ad-supported, in app purchases, editors choice and scraped time
+# Handling : 
+# Relased col, Privacy policy, ad-supported, in app purchases, editors choice and scraped time
 # %%
-#released column
+# released column
 sample_values1 = df_clean['Released'].sample(n=20)
 print(sample_values1)
-
 # %%
 # Imputing the missing values of released column  with median date 
-df_clean['Released'] = pd.to_datetime(df['Released'], errors='coerce')
+df_clean['Released'] = pd.to_datetime(df_clean['Released'], errors='coerce')
 median_date = df_clean['Released'].median()  # Calculate the median date
 df_clean['Released'].fillna(median_date, inplace=True)
 df_clean['Released'].isna().sum() #recheking for missing values
 
 # %%
-#Calculating age of the app, by extracting the release date from the current date
+# Calculating age of the app, by extracting the release date from the current date
 
 df_clean['Year Released']= df_clean['Released'].dt.year #extracting year, month and day
 df_clean['Month Released']= df_clean['Released'].dt.month
@@ -383,8 +382,8 @@ current_date=pd.to_datetime('now')
 df_clean['App Age'] = round((current_date - df_clean['Released']).dt.days / 365.25,2) if pd.__version__ >= '1.1.0' else (current_date - df['Released']).days / 365.25
 #print(df['App Age'])
 # %%
-#visualization of released column
-#exploring distribution of app over the ages
+# visualization of released column
+# exploring distribution of app over the ages
 
 plt.figure(figsize=(10,6))
 sns.countplot(x= 'Year Released', data= df_clean,hue='Year Released', legend=False, palette = 'viridis')
@@ -393,7 +392,7 @@ plt.xlabel('Year Released')
 plt.ylabel('Number of Apps')
 plt.show()
 
-#Line plot with aggregated counts
+# Line plot with aggregated counts
 plt.figure(figsize=(12, 6))
 df_clean['Year Released'].value_counts().sort_index().plot(kind='line', marker='o', color='skyblue')
 plt.title('Trend of App Releases Over the Years')
@@ -402,18 +401,18 @@ plt.ylabel('Number of Apps')
 plt.show()
 
 # %%
-#Privacy column
-#Handling missing values
+# Privacy column
+# Handling missing values
 df_clean['Privacy Policy'].isnull().sum()
-df_clean['Privacy Policy'].fillna('Not Available', inplace = True) #Imputing missing value
+# Imputing na value for easy replacement in further steps
+df_clean['Privacy Policy'].fillna('Not Available', inplace = True)
 
 # %%
-#Creating a binary feature indicating whether the app has a privacy policy or not
+# Creating a binary feature indicating whether the app has a privacy policy or not
 df_clean['Has_PrivacyPolicy']= df_clean['Privacy Policy'].apply(lambda x: 1 if x != 'Not Available' else 0)
 df_clean['Has_PrivacyPolicy']
-
 # %%
-#visualizing distribution of apps with and without privacy policy 
+# visualizing distribution of apps with and without privacy policy 
 
 counts = df_clean['Has_PrivacyPolicy'].value_counts()
 
@@ -426,24 +425,19 @@ plt.xticks(rotation=0)
 plt.show()
 
 # %%
-#df['Ad Supported'].head(10)
-ad_support_counts = df_clean['IsAdSupported'].value_counts()
-ad_support_counts
-# %%
-#Ad-supported Column
-df_clean['Ad Supported'].isnull().sum()
-df_clean['IsAdSupported'] = df_clean['Ad Supported']
+# Ad-supported Column
+df_clean['Ad Supported'].value_counts()
 
 # %%
 #Visualization of number of apps ad supported vs not supported 
 plt.figure(figsize=(8, 5))
-sns.countplot(x='IsAdSupported', data=df_clean, palette='viridis',legend= False, hue= 'IsAdSupported')
+sns.countplot(x='Ad Supported', data=df_clean, palette='viridis',legend= False, hue= 'Ad Supported')
 plt.title('Distribution of Apps with and without Ad Support')
 plt.xlabel('Is Ad Supported')
 plt.ylabel('Number of Apps')
 plt.show()
 
-#Number of apps ad supported are almost the same as that not ad supported
+# Number of apps ad supported are almost the same as that not ad supported
 
 # %%
 df_clean['In App Purchases'].isnull().sum()
@@ -455,16 +449,15 @@ plt.ylabel('Number of Apps')
 plt.show()
 
 # %%
-#Exploring Editor's Choice App
+# Exploring Editor's Choice App
 
-df_clean['Editors Choice'].isnull().sum()
+print(df_clean['Editors Choice'].isnull().sum())
 df_clean['Editors Choice'].head(10)
-Editor_counts = df_clean['Editors Choice'].value_counts()
-print(Editor_counts)
+# %%
+print('Editor_counts:\n', df_clean['Editors Choice'].value_counts())
 
 # %%
-
-#Visulization of the Editor's choice app
+# Visulization of the Editor's choice app
 
 plt.figure(figsize=(8, 5))
 sns.countplot(x='Editors Choice', data=df_clean, palette='viridis',legend= False, hue = 'Editors Choice')
@@ -477,43 +470,11 @@ plt.ylabel('Number of Apps')
 plt.show()
 
 # %%
-#Exploring Scraped Time column and visualization of the Scraped time column
-
-df_clean['Scraped Time'].head(10)
-df_clean['Scraped Time'].isnull().sum()
-df_clean['Scraped Time'] = pd.to_datetime(df_clean['Scraped Time'], errors='coerce')
-
-# Creating a time series plot of the number of apps scraped over time
-plt.figure(figsize=(12, 6))
-df_clean.groupby('Scraped Time').size().plot(title='Time Series of App Scraping', color='skyblue')
-plt.xlabel('Scraped Time')
-plt.ylabel('Number of Apps')
-plt.show()
+# Scraped time column just refers to the time when the data for the particular app was scraped.
+# There is no need for this column.
+df_clean = df_clean.drop('Scraped Time', axis=1)
 
 # %%
-#Creating a time series chart to observe patterns in the scraping time over different time periods
-
-df_clean['DayOfWeek'] = df_clean['Scraped Time'].dt.day_name() #Extracting day of the week and hour
-df_clean['HourOfDay'] = df_clean['Scraped Time'].dt.hour
-plt.figure(figsize=(14, 8))
-
-# Time series plot for Day of the Week
-plt.subplot(2, 1, 1)
-sns.countplot(x='DayOfWeek', data=df_clean, palette='viridis', order=['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],legend= False, hue= 'DayOfWeek')
-plt.title('Number of Apps Scraped by Day of the Week')
-plt.xlabel('Day of the Week')
-plt.ylabel('Number of Apps')
-
-# Time series plot for Hour of the Day
-plt.subplot(2, 1, 2)
-sns.countplot(x='HourOfDay', data=df_clean, palette='viridis', legend= False, hue= 'HourOfDay' )
-plt.title('Number of Apps Scraped by Hour of the Day')
-plt.xlabel('Hour of the Day')
-plt.ylabel('Number of Apps')
-
-plt.tight_layout()
-plt.show()
-
 # dev id, dev website, dev email, released, last updated, content rating
 df_clean['Content Rating'].value_counts()
 # %%
