@@ -500,23 +500,25 @@ df_clean['Year Last Updated'] = df_clean['Last Updated'].apply(lambda x: splice_
 # %%
 df_clean['Year Last Updated'] = df_clean['Year Last Updated'].astype(int)
 # %%
-df_clean['Year Last Updated'].max()
-df_clean['Year Last Updated'].min()
+print(df_clean['Year Last Updated'].max(), df_clean['Year Last Updated'].min())
 # %%
 sns.boxenplot(y="Year Last Updated", data=df_clean, palette="crest")
 plt.ylabel("Year Last Updated")
+plt.show()
 # %%
 # df_clean["Rating"].head(10)
 # %%
-sns.scatterplot(x='Content Rating', y='Rating', data=df_clean, palette="mako")
+sns.stripplot(x='Content Rating', y='Rating', data=df_clean, palette="mako")
 plt.title('Scatter Plot between Content Rating and Rating')
 plt.ylabel('Rating')
 plt.xlabel('Content Rating')
+plt.show()
 # %%
 sns.stripplot(x='Year Last Updated', y='Rating', data=df_clean, palette="magma")
 plt.title('Scatter Plot between Year of Last Update and Rating')
 plt.ylabel('Rating')
 plt.xlabel('Year Last Updated')
+plt.show()
 # %%
 value_counts_table = df_clean['Year Last Updated'].value_counts().reset_index()
 value_counts_table.columns = ['Year', 'Count']
@@ -528,25 +530,30 @@ plt.xlabel('Year Last Updated')
 plt.ylabel('Number of Apps')
 plt.title('App Update trend over the years')
 plt.tight_layout()
+plt.show()
 # %%
 df_clean['Developer Website'].isna().sum()
 # %%
 df_clean['has_developer_website'] = df_clean['Developer Website'].notna().astype(int)
 # %%
+df_clean['has_developer_website'].head()
+# %%
 sns.countplot(x="has_developer_website", data=df_clean, palette="PiYG")
 plt.xlabel("Has Developer Website")
 plt.ylabel("Number of Apps")
 plt.title("Number of apps with or without Developer Website")
+plt.show()
 # %%
 # sns.barplot(y='Rating', data=df_clean, hue='has_developer_website', palette="magma", color="yellow")
 # plt.xlim(0,5)
 # %%
 plt.figure(figsize=(4, 8))
-fig=px.treemap(df_clean, path=["Category", "Content Rating"], title="Count of Rating by age group by category")
+fig=px.treemap(df_clean, path=["Category", "Content Rating"], 
+               title="Count of Rating by age group by category")
 fig.show()
 # %%
-fig = px.histogram(df_clean, x="Rating", color="has_developer_website",
-                   marginal="violin", title="Number of apps by Rating, grouped by presence of developer website"
+fig = px.histogram(df_clean, x="Rating", color="has_developer_website", marginal="violin", 
+                   title="Number of apps by Rating, grouped by presence of developer website"
                   )
 fig.show()
 fig.update_layout(
