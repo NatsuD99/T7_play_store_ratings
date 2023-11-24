@@ -7,9 +7,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
-
+from tabulate import tabulate
+import plotly.express as px
 sns.set_palette('ocean_r')
-
 
  # %% [markdown]
 ## Import Data
@@ -535,25 +535,73 @@ def splice_string(original_string, start, end=None):
     else:
         return original_string[start:end]
 # %%
-df_clean['Last Updated'] = df_clean['Last Updated'].apply(lambda x: splice_string(x,8, ))
+df_clean['Year Last Updated'] = df_clean['Last Updated'].apply(lambda x: splice_string(x,8, ))
 # %%
-df_clean['Last Updated'] = df_clean['Last Updated'].astype(int)
+df_clean['Year Last Updated'] = df_clean['Year Last Updated'].astype(int)
 # %%
-df_clean['Last Updated'].max()
-df_clean['Last Updated'].min()
+df_clean['Year Last Updated'].max()
+df_clean['Year Last Updated'].min()
 # %%
-sns.boxenplot(y="Last Updated", data=df_clean, palette="crest")
+sns.boxenplot(y="Year Last Updated", data=df_clean, palette="crest")
 plt.ylabel("Year Last Updated")
 # %%
 # df_clean["Rating"].head(10)
 # %%
-sns.stripplot(x='Content Rating', y='Rating', data=df_clean, palette="crest_r")
+sns.scatterplot(x='Content Rating', y='Rating', data=df_clean, palette="mako")
 plt.title('Scatter Plot between Content Rating and Rating')
 plt.ylabel('Rating')
 plt.xlabel('Content Rating')
 # %%
-sns.stripplot(x='Last Updated', y='Rating', data=df_clean, palette="magma")
+sns.stripplot(x='Year Last Updated', y='Rating', data=df_clean, palette="magma")
 plt.title('Scatter Plot between Year of Last Update and Rating')
 plt.ylabel('Rating')
 plt.xlabel('Year Last Updated')
+# %%
+value_counts_table = df_clean['Year Last Updated'].value_counts().reset_index()
+value_counts_table.columns = ['Year', 'Count']
+table_str = tabulate(value_counts_table, headers='keys', tablefmt='pipe', showindex=False)
+print(table_str)
+#%%
+df_clean['Year Last Updated'].value_counts().sort_index().plot(marker='o', color='#B28EC7')
+plt.xlabel('Year Last Updated')
+plt.ylabel('Number of Apps')
+plt.title('App Update trend over the years')
+plt.tight_layout()
+# %%
+df_clean['Developer Website'].isna().sum()
+# %%
+df_clean['has_developer_website'] = df_clean['Developer Website'].notna().astype(int)
+# %%
+sns.countplot(x="has_developer_website", data=df_clean, palette="PiYG")
+plt.xlabel("Has Developer Website")
+plt.ylabel("Number of Apps")
+plt.title("Number of apps with or without Developer Website")
+# %%
+# sns.barplot(y='Rating', data=df_clean, hue='has_developer_website', palette="magma", color="yellow")
+# plt.xlim(0,5)
+# %%
+plt.figure(figsize=(4, 8))
+fig=px.treemap(df_clean, path=["Category", "Content Rating"], title="Count of Rating by age group by category")
+fig.show()
+# %%
+fig = px.histogram(df_clean, x="Rating", color="has_developer_website",
+                   marginal="violin", title="Number of apps by Rating, grouped by presence of developer website"
+                  )
+fig.show()
+fig.update_layout(
+    xaxis_title="Rating",
+    yaxis_title="Count of Apps",
+    width=750,  
+    height=500
+)
+# %%
+
+# fig = px.scatter(df_clean, x="Rating", y="Price", color="Content Rating",
+#                   hover_data=['Category'])
+# fig.show()
+# fig.update_layout(
+#     xaxis_title="Rating",
+#     yaxis_title="Count of Apps",
+# )
+
 # %%
