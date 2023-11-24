@@ -294,18 +294,22 @@ top10cat = ['Education', 'Music', 'Business', 'Tools',
             'Personalization', 'Health & Fitness', 'Productivity']
 df_top10cat= df_clean[df_clean['Category'].isin(top10cat)]
 df_top10cat['Category'].value_counts(normalize=True).plot.barh()
+plt.title("Proportion of top 10 categories")
+plt.xlabel("Proportion")
 plt.show()
 # %% [markdown]
 # So the Education category apps take up about 20% of all the apps.
 # %%
 # Now let's take a look at the app ratings.
 sns.histplot(x='Rating', data=df_clean, bins=20, kde=True)
+plt.title("Histogram of Ratings")
 plt.show()
 # Interestingly, we observe that a huge number of apps have 0 rating.
 # Let's 1st get a better visual by omitting those
 # %%
 sns.histplot(x='Rating', data=df_clean[df_clean['Rating']>0], 
              bins=20, kde=True)
+plt.title("Histogram of Ratings (0 ratings excluded)")
 plt.show()
 # We get a better idea from this that most of the apps have a rating b/w 3.5-5
 
@@ -318,11 +322,13 @@ df_clean['Rating Count'].describe().apply('{:.5f}'.format)
 # below 42 to get a better idea
 # %%
 sns.histplot(x='Rating Count', data=df_clean, bins=20)
+plt.title("Histogram of Rating Count")
 plt.show()
 # %%[markdown]
 # Okay!, so we don't even see anything here.
 # %%
 sns.histplot(x='Rating Count', data=df_clean[df_clean['Rating Count']<42], bins=20)
+plt.title("Histogram of Rating Count (< 3rd quantile)")
 plt.show()
 # This shows that majority of apps don't even get any ratings.
 # And just a few get over hundreds and thousands of ratings.
@@ -337,9 +343,15 @@ len(df_clean[df_clean['Rating Count']>1e6])
 # Let's try to see apps from which category have higher ratings,
 # and which are the categories that get rated the most.
 df_clean[df_clean['Rating']>3.5]['Category'].value_counts().head().plot.barh()
+plt.title("Top 5 highest rated apps by Category")
+plt.xlabel("Count")
+plt.show()
 # So the education category has the higest rated apps.
 # %%
 df_clean[df_clean['Rating Count']>1e6]['Category'].value_counts().head(6).plot.barh()
+plt.title("Top 6 apps with the most rating counts by Category")
+plt.xlabel("Count")
+plt.show()
 # Action apps have the most number of ratings. 
 # 74 of total apps with more than a million reviews belong to action category. These could be the action games which are super popular.
 # Sports and music have the same number of ratings and are in top 5.
@@ -351,6 +363,9 @@ df_clean[df_clean['Rating Count']>1e6][df_clean['Category']=='Action'][['App Nam
 
 # %%
 df_clean['Minimum Installs'].value_counts(normalize=True).plot.barh()
+plt.title("Proportion of Minimum installs")
+plt.xlabel("Proportion  ")
+plt.show()
 # On checking the install count, we see that the majority of apps fall 
 # in the install range of 10 to 10,000.
 # %%
