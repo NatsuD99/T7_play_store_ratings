@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from tabulate import tabulate
+import math
 import plotly.express as px
 sns.set_palette('ocean_r')
 
@@ -611,10 +612,10 @@ df_clean['Currency'].value_counts(normalize=True)
 # in the dataset is extremely high, at approximately 99.946%. 
 # This suggests that the overwhelming majority of entries in the 
 # dataset are denominated in U.S. Dollars.
-#XXX (Unknown Currency): This has a probability of approximately
+# XXX (Unknown Currency): This has a probability of approximately
 # 0.053%, indicating that there are a small number of instances
 # where the currency information is either missing or not specified.
-#EUR (Euro), INR (Indian Rupee), GBP (British Pound Sterling), 
+# EUR (Euro), INR (Indian Rupee), GBP (British Pound Sterling), 
 # CAD (Canadian Dollar), VND (Vietnamese Dong), BRL (Brazilian Real),
 # KRW (South Korean Won), TRY (Turkish Lira), SGD (Singapore Dollar),
 # AUD (Australian Dollar), ZAR (South African Rand): These currencies 
@@ -623,12 +624,12 @@ df_clean['Currency'].value_counts(normalize=True)
 
 # %%[Processing minimum android column]
 # Function to extract the numeric part from the 'Minimum Android' column
-import math
+
 # Function to extract the numeric part, round up, and return the first three characters
 def extract_and_round_up(version_string):
     try:
         # Split the string, take the first part, convert to float, round up, and return the first three characters
-        #The basic reason of applying ceiling function is because
+        # The basic reason of applying ceiling function is because
         return str(math.ceil(float(version_string.split()[0][:3])))
     except (ValueError, IndexError):
         # Return the original string in case of an exception
@@ -650,22 +651,22 @@ plt.xlabel('Minimum Android Version')
 plt.ylabel('Count')
 plt.xticks(rotation=90, ha='right')
 plt.show()
-#Android Version 5:
+# Android Version 5:
 # This version appears most frequently in the dataset, with a count
 # of (please enter number as data will be changed), indicating a significant presence of apps designed for
 # Android version 5.
-#Android Version 4: The second most common version, appearing
+# Android Version 4: The second most common version, appearing
 # 338,684 times.
-#Android Version 6: Appears 149,101 times.
-#Android Version 3: Appears 144,798 times.
-#Android Version 7: Appears 34,407 times.
-#Varies with Device: Indicates cases where the minimum Android
+# Android Version 6: Appears 149,101 times.
+# Android Version 3: Appears 144,798 times.
+# Android Version 7: Appears 34,407 times.
+# Varies with Device: Indicates cases where the minimum Android
 # version is flexible or unspecified, occurring 24,322 times.
-#Android Version 8: Appears 16,853 times.
-#Android Version 2: Appears 14,025 times.
-#Android Version 1: The least common version in the dataset,
+# Android Version 8: Appears 16,853 times.
+# Android Version 2: Appears 14,025 times.
+# Android Version 1: The least common version in the dataset,
 # appearing only 309 times.
-#These numbers provide insights into the distribution of minimum 
+# These numbers provide insights into the distribution of minimum 
 # Android versions within the dataset, helping to understand the 
 # prevalence of different Android versions among the apps.
 #%%
@@ -693,7 +694,7 @@ ax2.tick_params(axis='x', rotation=90)
 
 plt.show()
 # #%%
-#need to correct it
+# need to correct it
 # df_clean['Rating Count'] = df_clean['Rating Count'].astype(str)
 # df_clean['Rating'] = df_clean['Rating'].astype(str)
 
@@ -717,3 +718,5 @@ plt.show()
 
 # #%%[]
 
+
+# %%
