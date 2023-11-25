@@ -588,3 +588,132 @@ fig.update_layout(
 # )
 
 # %%
+# %%[markdown]
+#Analysing the currency column
+currency_counts = df_clean['Currency'].value_counts()
+plt.figure(figsize=(10, 6))
+plt.pie(currency_counts, labels=currency_counts.index, autopct='%1.2f%%', startangle=90)
+plt.title('Distribution of Currencies')
+plt.legend(currency_counts.index, loc='center left', bbox_to_anchor=(1, 0.5))
+plt.show()
+#Conclusion:
+#The dataset is heavily dominated by transactions in U.S. Dollars,
+# as evidenced by the high probability associated with USD.
+# The low probabilities for other currencies suggest that these alternate currencies 
+# are rare or infrequently represented in the dataset. 
+# The presence of 'XXX' still indicates some instances where 
+# the currency information is unspecified or missing, albeit at 
+# a very low probability.
+
+#%%
+df_clean['Currency'].value_counts(normalize=True)
+#USD (U.S. Dollar): The probability of encountering the U.S. Dollar
+# in the dataset is extremely high, at approximately 99.946%. 
+# This suggests that the overwhelming majority of entries in the 
+# dataset are denominated in U.S. Dollars.
+#XXX (Unknown Currency): This has a probability of approximately
+# 0.053%, indicating that there are a small number of instances
+# where the currency information is either missing or not specified.
+#EUR (Euro), INR (Indian Rupee), GBP (British Pound Sterling), 
+# CAD (Canadian Dollar), VND (Vietnamese Dong), BRL (Brazilian Real),
+# KRW (South Korean Won), TRY (Turkish Lira), SGD (Singapore Dollar),
+# AUD (Australian Dollar), ZAR (South African Rand): These currencies 
+# have very low probabilities (in the range of 0.0000026% to 0.000000044%) 
+# relative to the U.S. Dollar, indicating their infrequent occurrence in the dataset.
+
+# %%[Processing minimum android column]
+# Function to extract the numeric part from the 'Minimum Android' column
+import math
+# Function to extract the numeric part, round up, and return the first three characters
+def extract_and_round_up(version_string):
+    try:
+        # Split the string, take the first part, convert to float, round up, and return the first three characters
+        #The basic reason of applying ceiling function is because
+        return str(math.ceil(float(version_string.split()[0][:3])))
+    except (ValueError, IndexError):
+        # Return the original string in case of an exception
+        return version_string
+
+# Apply the function to the 'Minimum Android' column
+df_clean['Minimum Android'] = df_clean['Minimum Android'].apply(extract_and_round_up)
+
+# Print the updated DataFrame
+print(df_clean['Minimum Android'])
+
+ 
+# %%[markdown]
+#Visualising Minimum android Column
+plt.figure(figsize=(10, 6))
+df_clean['Minimum Android'].value_counts().plot(kind='bar', color='skyblue')
+plt.title('Distribution of Minimum Android Versions')
+plt.xlabel('Minimum Android Version')
+plt.ylabel('Count')
+plt.xticks(rotation=90, ha='right')
+plt.show()
+#Android Version 5:
+# This version appears most frequently in the dataset, with a count
+# of (please enter number as data will be changed), indicating a significant presence of apps designed for
+# Android version 5.
+#Android Version 4: The second most common version, appearing
+# 338,684 times.
+#Android Version 6: Appears 149,101 times.
+#Android Version 3: Appears 144,798 times.
+#Android Version 7: Appears 34,407 times.
+#Varies with Device: Indicates cases where the minimum Android
+# version is flexible or unspecified, occurring 24,322 times.
+#Android Version 8: Appears 16,853 times.
+#Android Version 2: Appears 14,025 times.
+#Android Version 1: The least common version in the dataset,
+# appearing only 309 times.
+#These numbers provide insights into the distribution of minimum 
+# Android versions within the dataset, helping to understand the 
+# prevalence of different Android versions among the apps.
+#%%
+grouped_df1 = df_clean.groupby('Minimum Android')['Rating Count'].sum().to_frame(name='Rating Count').sort_values(by='Rating Count', ascending=False)
+grouped_df2 = df_clean.groupby('Minimum Android')['Rating'].sum().to_frame(name='Rating').sort_values(by='Rating', ascending=False)
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+
+# Plot Rating Count on the left y-axis
+color = 'tab:blue'
+ax1.bar(grouped_df1.index, grouped_df1['Rating Count'], color='skyblue')
+ax1.set_title('Rating Count by Minimum Android Version')
+ax1.set_xlabel('Minimum Android Version')
+ax1.set_ylabel('Rating Count')
+ax1.tick_params(axis='x', rotation=90)  # Rotate x-axis labels
+
+
+# Create a second y-axis for Rating on the right
+#ax2 = ax1.twinx()
+ax2.bar(grouped_df2.index, grouped_df2['Rating'], color='orange')
+ax2.set_title('Rating by Minimum Android Version')
+ax2.set_xlabel('Minimum Android Version')
+ax2.set_ylabel('Rating')
+ax2.tick_params(axis='x', rotation=90)
+#Apps with 
+
+plt.show()
+# #%%
+#need to correct it
+# df_clean['Rating Count'] = df_clean['Rating Count'].astype(str)
+# df_clean['Rating'] = df_clean['Rating'].astype(str)
+
+# fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(17, 7))
+
+# # Scatter plot 1: Rating counts by app size
+# sns.scatterplot(x='Size', y='Rating Count', data=df_clean, ax=ax1)
+# ax1.set_xlabel('App Size (kB)')
+# ax1.set_ylabel('Rating Counts')
+# ax1.set_title('Relationship between App Size and Rating Counts')
+
+# # Scatter plot 2: Rating by app size
+# sns.scatterplot(x='Size', y='Rating', data=df_clean, ax=ax2)
+# ax2.set_xlabel('App Size (kB)')
+# ax2.set_ylabel('Rating')
+# ax2.set_title('Relationship between App Size and Rating')
+
+# plt.tight_layout()
+# plt.show()
+
+
+# #%%[]
+
