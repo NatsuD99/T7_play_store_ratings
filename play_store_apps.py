@@ -501,59 +501,81 @@ df_clean['Content Rating'] = df_clean['Content Rating'].replace('Mature 17+', '1
 df_clean['Content Rating'] = df_clean['Content Rating'].replace('Everyone 10+', '10+')
 df_clean['Content Rating'] = df_clean['Content Rating'].replace('Adults only 18+', '18+')
 # %%
+# We will now try to visualise the distribution of apps across different content rating categories
 df_clean['Content Rating'].value_counts(normalize=True).plot.barh()
-# df_clean["Content Rating"]
-# %%
+# The bar plot shows that most of the apps are labeled as 'Everyone', and in comparison, apps rated
+# as '18+' are almost negligible.
+# %% # Peeking at the 'Last Updated' column...
 df_clean['Last Updated'].head()
+# The 'Last Updated' column is of object type.
 # %%
+# We'll now extract the year from the 'Last Updated' column using the 'splice_string' function
+# created below.
 def splice_string(original_string, start, end=None):
     if end is None:
         return original_string[start:]
     else:
         return original_string[start:end]
-# %%
+# %% 
+# The extracted year is stored in a new column, 'Year Last Updated'.
 df_clean['Year Last Updated'] = df_clean['Last Updated'].apply(lambda x: splice_string(x,8, ))
 # %%
+# Converting the new column to integer type
 df_clean['Year Last Updated'] = df_clean['Year Last Updated'].astype(int)
 # %%
+# The range of this column is 2009 to 2021
 print(df_clean['Year Last Updated'].max(), df_clean['Year Last Updated'].min())
 # %%
+# We'll add a visualization of the same
 sns.boxenplot(y="Year Last Updated", data=df_clean, palette="crest")
 plt.ylabel("Year Last Updated")
 plt.show()
 # %%
-# df_clean["Rating"].head(10)
-# %%
+# Visualizing the relationship between Content Rating and User Rating via a scatter plot:
 sns.stripplot(x='Content Rating', y='Rating', data=df_clean, palette="mako")
 plt.title('Scatter Plot between Content Rating and Rating')
 plt.ylabel('Rating')
 plt.xlabel('Content Rating')
 plt.show()
+# As we deduced earlier, most apps are concentrated to the 'Everyone' category.
+# Also, people using the '18+' apps are less likely to leave a rating.
 # %%
+# Visualizing the trend between the user ratin g
 sns.stripplot(x='Year Last Updated', y='Rating', data=df_clean, palette="magma")
 plt.title('Scatter Plot between Year of Last Update and Rating')
 plt.ylabel('Rating')
 plt.xlabel('Year Last Updated')
 plt.show()
+# Most recently updated apps have a higher rating count compared to apps that have been dormant for 
+# almost a decade and a half.
 # %%
+# 'Year Last Updated' as a table -
 value_counts_table = df_clean['Year Last Updated'].value_counts().reset_index()
 value_counts_table.columns = ['Year', 'Count']
 table_str = tabulate(value_counts_table, headers='keys', tablefmt='pipe', showindex=False)
 print(table_str)
+# Very few number of apps are observed been dormant since 2009
 #%%
+# Line graph of the update trend:
 df_clean['Year Last Updated'].value_counts().sort_index().plot(marker='o', color='#B28EC7')
 plt.xlabel('Year Last Updated')
 plt.ylabel('Number of Apps')
 plt.title('App Update trend over the years')
 plt.tight_layout()
 plt.show()
+# App updates peaked in 2020
 # %%
 df_clean['Developer Website'].isna().sum()
+# There are a lot of NA values in 'Developer Website'
 # %%
+# We'll now create a separate column that will contain the presence or absence of 'Developer Website'
+# in the form of boolean (0 or 1/False or True) values.
 df_clean['has_developer_website'] = df_clean['Developer Website'].notna().astype(int)
 # %%
+# the new column is ready
 df_clean['has_developer_website'].head()
 # %%
+# Most apps do have a Developer Website, but the apps without a developer website are not less either
 sns.countplot(x="has_developer_website", data=df_clean, palette="PiYG")
 plt.xlabel("Has Developer Website")
 plt.ylabel("Number of Apps")
@@ -563,6 +585,7 @@ plt.show()
 # sns.barplot(y='Rating', data=df_clean, hue='has_developer_website', palette="magma", color="yellow")
 # plt.xlim(0,5)
 # %%
+# Visualizing the content rating based on the category of apps through a treemap
 plt.figure(figsize=(4, 8))
 fig=px.treemap(df_clean, path=["Category", "Content Rating"], 
                title="Count of Rating by age group by category")
@@ -571,13 +594,13 @@ fig.show()
 fig = px.histogram(df_clean, x="Rating", color="has_developer_website", marginal="violin", 
                    title="Number of apps by Rating, grouped by presence of developer website"
                   )
-fig.show()
 fig.update_layout(
     xaxis_title="Rating",
     yaxis_title="Count of Apps",
     width=750,  
     height=500
 )
+fig.show()
 # %%
 
 # fig = px.scatter(df_clean, x="Rating", y="Price", color="Content Rating",
