@@ -11,7 +11,8 @@ from tabulate import tabulate
 import math
 import plotly.express as px
 sns.set_palette('ocean_r')
-
+import scipy.stats as stats
+from scipy.stats import kruskal
  # %% [markdown]
 ## Import Data
 # %%
@@ -742,4 +743,46 @@ plt.show()
 # #%%[]
 
 
+# %%
+df_clean.head()
+# %%
+# Do price (yes) and category (no) significantly impact the popularity of an app in terms of installs?
+# Are there any significant differences in "Rating" (yes) and "Installs" (yes) between "Editor's Choice" apps and
+# regular apps?
+df_clean['Minimum Installs'].value_counts(normalize=True).plot.barh()
+# %%
+df_clean["Minimum Installs"].describe()
+# %%
+df_clean['Editors Choice'] = pd.factorize(df_clean['Editors Choice'])[0]
+# %%
+# %%
+df_clean['Editors Choice'].value_counts()
+# %%
+t_test_rating = stats.ttest_ind(df_clean[df_clean['Editors Choice'] == 0]['Rating'],
+                                df_clean[df_clean['Editors Choice'] == 1]['Rating'])
+# %%
+t_test_rating
+# %%
+t_test_install = stats.ttest_ind(df_clean[df_clean['Editors Choice'] == 0]['Minimum Installs'],
+                                df_clean[df_clean['Editors Choice'] == 1]['Minimum Installs'])
+# %%
+t_test_install
+# %%
+df_clean['Price_Status'] = df_clean['Price'].apply(lambda x: 'Free' if x == 0 else 'Paid')
+df_clean['Price_Status'].value_counts()
+# %%
+t_test_price_max = stats.ttest_ind(df_clean[df_clean['Price_Status'] == 'Free']['Maximum Installs'],
+                                df_clean[df_clean['Price_Status'] == 'Paid']['Maximum Installs'])
+# %%
+t_test_price_max
+# %%
+t_test_price_min = stats.ttest_ind(df_clean[df_clean['Price_Status'] == 'Free']['Minimum Installs'],
+                                df_clean[df_clean['Price_Status'] == 'Paid']['Minimum Installs'])
+# %%
+t_test_price_min
+# %%
+h_stat, p_value = kruskal(*[group['Minimum Installs'] for name, group in df_clean.groupby('Category')])
+# %%
+print(f"H-Statistic: {h_stat}")
+print(f"P-Value: {p_value}")
 # %%
