@@ -717,7 +717,7 @@ ax2.tick_params(axis='x', rotation=90)
 #Apps with 
 
 plt.show()
-# #%%
+#%%
 # need to correct it
 # df_clean['Rating Count'] = df_clean['Rating Count'].astype(str)
 # df_clean['Rating'] = df_clean['Rating'].astype(str)
@@ -785,4 +785,86 @@ h_stat, p_value = kruskal(*[group['Minimum Installs'] for name, group in df_clea
 # %%
 print(f"H-Statistic: {h_stat}")
 print(f"P-Value: {p_value}")
+# %%
+df_clean['Size'].unique()
+#%%
+df_clean['Size'] = pd.to_numeric(df_clean['Size'], errors='coerce')
+df_clean['Minimum Installs'] = df_clean['Minimum Installs'].astype(float)
+df_clean['Maximum Installs'] = df_clean['Maximum Installs'].astype(float)
+
+# %%[markdown]
+#I have used Pearson correlation coefficient to measure the linear relationship
+# between "Size" and "Minimum Installs" or "Maximum Installs."
+correlation_min_installs = df_clean['Size'].corr(df_clean['Minimum Installs'])
+correlation_max_installs = df_clean['Size'].corr(df_clean['Maximum Installs'])
+
+# %%
+# Select the columns for the correlation matrix
+selected_columns = ['Size', 'Minimum Installs', 'Maximum Installs']
+correlation_matrix = df_clean[selected_columns].corr()
+
+# Plot the heatmap
+plt.figure(figsize=(8, 6))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f", linewidths=.5)
+plt.title('Correlation Matrix')
+plt.show()
+#%%
+sns.scatterplot(x= 'Size', y = 'Minimum Installs',data = df_clean, alpha=0.5)
+plt.title('Scatter Plot: Size vs. Minimum Installs')
+plt.xlabel('Size')
+plt.ylabel('Minimum Installs')
+plt.show()
+
+
+# %%
+#Performing linear regression to quantify the relationship between app size
+# and the number of installs.This code uses the Ordinary Least Squares (OLS)
+# method to fit a linear regression model for both "Minimum Installs" and 
+# "Maximum Installs" against "Size."
+import statsmodels.api as sm
+df_clean = df_clean.dropna(subset=['Size', 'Minimum Installs'])
+
+X = sm.add_constant(df_clean['Size'])
+model_min_installs = sm.OLS(df_clean['Minimum Installs'], X).fit()
+model_max_installs = sm.OLS(df_clean['Maximum Installs'], X).fit()
+#%%
+print(model_min_installs.summary())
+print(model_max_installs.summary())
+
+#%%
+
+# Does app size affect the number of installs?
+
+
+# Assuming 'data1' and 'data2' are your numerical columns
+from scipy.stats import ttest_rel
+
+# Assuming 'data1' and 'data2' are your numerical columns
+stat, p_value = ttest_rel(df_clean['Size'], df_clean['Minimum Installs'])
+
+# Check the p-value to determine significance
+if p_value < 0.05:
+    print("There is a significant difference.")
+else:
+    print("There is no significant difference.")
+
+# Both models have very low R-squared values, indicating that the 'Size' variable, as included in the models, explains only a tiny fraction of the variability in 'Minimum Installs' and 'Maximum Installs.'
+
+# The statistical significance of the 'Size' coefficient suggests that there is a significant relationship between 'Size' and both 'Minimum Installs' and 'Maximum Installs.' However, the practical significance of these relationships is limited, given the low R-squared values.
+
+# The high AIC and BIC values may indicate model complexity or issues that need further exploration.
+
+# The diagnostic tests on residuals suggest that there might be violations of model assumptions, particularly regarding the normality of residuals.
+
+# The large condition number in both models suggests potential multicollinearity issues, indicating that predictor variables may be correlated.
+
+# In conclusion, while the models show statistical significance, the low R-squared values and potential issues with residuals and multicollinearity indicate that the current models may not provide a strong and reliable explanation for the variations in 'Minimum Installs' and 'Maximum Installs.' Further refinement, exploration, and consideration of additional variables may be necessary for a more robust analysis
+
+# %%
+
+
+# Assuming df_clean is your DataFrame
+
+
+
 # %%
