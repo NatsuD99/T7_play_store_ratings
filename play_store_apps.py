@@ -749,6 +749,7 @@ df_clean.head()
 # Do price (yes) and category (no) significantly impact the popularity of an app in terms of installs?
 # Are there any significant differences in "Rating" (yes) and "Installs" (yes) between "Editor's Choice" apps and
 # regular apps?
+df_clean['Average Installs'] = df_clean[['Minimum Installs', 'Maximum Installs']].mean(axis=1)
 df_clean['Minimum Installs'].value_counts(normalize=True).plot.barh()
 # %%
 df_clean["Minimum Installs"].describe()
@@ -757,35 +758,62 @@ df_clean['Editors Choice'] = pd.factorize(df_clean['Editors Choice'])[0]
 # %%
 # %%
 df_clean['Editors Choice'].value_counts()
+#%%
+sns.barplot(x='Editors Choice', y='Rating', data=df_clean, hue='Editors Choice')
+plt.xlabel("Editor's Choice")
+plt.ylabel('Rating')
+plt.title("Bar plot between Editor's Choice and Rating")
+
 # %%
 t_test_rating = stats.ttest_ind(df_clean[df_clean['Editors Choice'] == 0]['Rating'],
                                 df_clean[df_clean['Editors Choice'] == 1]['Rating'])
 # %%
 t_test_rating
+#%% REVIEW
+sns.barplot(x='Editors Choice', y='Average Installs', data=df_clean)
+plt.xlabel("Editor's Choice")
+plt.ylabel('Average Installs')
+plt.title("Bar plot between Editor's Choice and Rating")
 # %%
-t_test_install = stats.ttest_ind(df_clean[df_clean['Editors Choice'] == 0]['Minimum Installs'],
-                                df_clean[df_clean['Editors Choice'] == 1]['Minimum Installs'])
+t_test_install = stats.ttest_ind(df_clean[df_clean['Editors Choice'] == 0]['Average Installs'],
+                                df_clean[df_clean['Editors Choice'] == 1]['Average Installs'])
 # %%
 t_test_install
 # %%
 df_clean['Price_Status'] = df_clean['Price'].apply(lambda x: 'Free' if x == 0 else 'Paid')
 df_clean['Price_Status'].value_counts()
 # %%
-t_test_price_max = stats.ttest_ind(df_clean[df_clean['Price_Status'] == 'Free']['Maximum Installs'],
-                                df_clean[df_clean['Price_Status'] == 'Paid']['Maximum Installs'])
-# %%
-t_test_price_max
-# %%
-t_test_price_min = stats.ttest_ind(df_clean[df_clean['Price_Status'] == 'Free']['Minimum Installs'],
-                                df_clean[df_clean['Price_Status'] == 'Paid']['Minimum Installs'])
+t_test_price_min = stats.ttest_ind(df_clean[df_clean['Price_Status'] == 'Free']['Average Installs'],
+                                df_clean[df_clean['Price_Status'] == 'Paid']['Average Installs'])
 # %%
 t_test_price_min
 # %%
-h_stat, p_value = kruskal(*[group['Minimum Installs'] for name, group in df_clean.groupby('Category')])
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x='Price_Status', y='Average Installs', hue="Editors Choice", data=df_clean, palette='viridis', s=100)
+
+
+
+
 # %%
-print(f"H-Statistic: {h_stat}")
-print(f"P-Value: {p_value}")
 # %%
+from scipy.stats import f_oneway
+for category in df_clean['Category'] :
+    anova_result = f_oneway(*[df_clean['Average Installs'][df_clean['Category'] == category] for category in df_clean['Category'].unique()])
+
+    # Print the ANOVA result
+    print(f"ANOVA Result: %d",category)
+    print("F-statistic:", anova_result.statistic)
+    print("P-value:", anova_result.pvalue)
+
+    if anova_result.pvalue < 0.05:
+            print("The means of 'Average Installs' are significantly different among different categories.")
+    else:
+            print("There is no significant difference in the means of 'Average Installs' among different categories.")
+# %%
+
+
+# %%
+## GOURAB
 df_clean['Size'].unique()
 #%%
 df_clean['Size'] = pd.to_numeric(df_clean['Size'], errors='coerce')
@@ -794,20 +822,20 @@ df_clean['Maximum Installs'] = df_clean['Maximum Installs'].astype(float)
 
 # %%[markdown]
 #I have used Pearson correlation coefficient to measure the linear relationship
-# between "Size" and "Minimum Installs" or "Maximum Installs."
-correlation_min_installs = df_clean['Size'].corr(df_clean['Minimum Installs'])
-correlation_max_installs = df_clean['Size'].corr(df_clean['Maximum Installs'])
+# # between "Size" and "Minimum Installs" or "Maximum Installs."
+# correlation_min_installs = df_clean['Size'].corr(df_clean['Minimum Installs'])
+# correlation_max_installs = df_clean['Size'].corr(df_clean['Maximum Installs'])
 
-# %%
-# Select the columns for the correlation matrix
-selected_columns = ['Size', 'Minimum Installs', 'Maximum Installs']
-correlation_matrix = df_clean[selected_columns].corr()
+# # %%
+# # Select the columns for the correlation matrix
+# selected_columns = ['Size', 'Minimum Installs', 'Maximum Installs']
+# correlation_matrix = df_clean[selected_columns].corr()
 
 # Plot the heatmap
-plt.figure(figsize=(8, 6))
-sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f", linewidths=.5)
-plt.title('Correlation Matrix')
-plt.show()
+# plt.figure(figsize=(8, 6))
+# sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f", linewidths=.5)
+# plt.title('Correlation Matrix')
+# plt.show()
 #%%
 sns.scatterplot(x= 'Size', y = 'Minimum Installs',data = df_clean, alpha=0.5)
 plt.title('Scatter Plot: Size vs. Minimum Installs')
