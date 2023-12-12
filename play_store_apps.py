@@ -1018,3 +1018,17 @@ y=df_model_data["Rating"]
 x=df_model_data.drop("Rating", axis=1)
 train_X,test_X,train_Y,test_Y=train_test_split(x,y,test_size=0.15,random_state=42)
 # %%
+# %%
+plt.figure(figsize=(20,15))
+sns.heatmap(df_model_data.corr(),annot=True)
+plt.plot()
+# %%
+model_lr=LinearRegression()
+model_lr.fit(train_X,train_Y)
+print('r2_score of training data',r2_score(model_lr.predict(train_X).round(1),train_Y))
+print('r2_score of testing data',r2_score(model_lr.predict(test_X).round(1),test_Y))
+# %%
+model_dt=DecisionTreeRegressor(max_depth=9)
+model_dt.fit(train_X,train_Y)
+print('r2_score of training data',r2_score(model_dt.predict(train_X).round(1),train_Y))
+print('r2_score of testing data',r2_score(model_dt.predict(test_X).round(1),test_Y))
