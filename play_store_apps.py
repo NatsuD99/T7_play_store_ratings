@@ -1,6 +1,7 @@
 # %% [markdown]
 ## Import Libraries
 # %%
+import smtpd
 import opendatasets as od
 import numpy as np
 import pandas as pd
@@ -12,12 +13,15 @@ import math
 import plotly.express as px
 sns.set_palette('ocean_r')
 import scipy.stats as stats
-from scipy.stats import kruskal
+from scipy.stats import kruskal, pearsonr, f_oneway
 from sklearn.model_selection import train_test_split
 from currency_converter import CurrencyConverter
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import r2_score
+from sklearn.linear_model import LinearRegression, SGDRegressor
+from lightgbm import LGBMRegressor
+from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.tree import DecisionTreeRegressor
+import statsmodels.api as sm
+from skopt  import BayesSearchCV # pip install scikit-optimize
  # %% [markdown]
 ## Import Data
 # %%
@@ -30,7 +34,7 @@ df = pd.read_csv("google-playstore-apps/Google-Playstore.csv")
 df.head()
 
 # %% [markdown]
-## Data Explorartion
+## Data Exploration
 # %%
 df.shape
 # %%
@@ -82,7 +86,7 @@ df_clean[['Installs', 'Minimum Installs']].head()
 # The values in minimum installs are object type with '+' appended at the end. 
 # It also has commas.
 # It also seems like the values in the 2 columns are same.
-# Let's remove those and have `Installs` as a numerical column and then compare 
+# Let's remove those and have Installs as a numerical column and then compare 
 # to check if the values are actually the same.
 # %%
 df_clean['Installs']=df_clean['Installs'].map(lambda x: x[:-1])
@@ -107,21 +111,24 @@ df_clean.isna().sum()
 # Now let's concentrate on the currency column which has 20 nan values.
 # %%
 print(df_clean['Currency'].value_counts())
+# %%[markdown]
 # The various currencies are:
-# 'USD': United States Dollar,'CAD': Canadian Dollar
-# 'EUR': Euro 'INR': Indian Rupee 'VND': Vietnamese Dong
-# 'GBP': British Pound Sterling  'BRL': Brazilian Real
-# 'KRW': South Korean Won  'TRY': Turkish Lira
-# 'SGD': Singapore Dollar 'AUD': Australian Dollar
-# 'ZAR': South African Rand
+# * 'USD': United States Dollar,'CAD': Canadian Dollar
+# * 'EUR': Euro 'INR': Indian Rupee 'VND': Vietnamese Dong
+# * 'GBP': British Pound Sterling  'BRL': Brazilian Real
+# * 'KRW': South Korean Won  'TRY': Turkish Lira
+# * 'SGD': Singapore Dollar 'AUD': Australian Dollar
+# * 'ZAR': South African Rand
+# 
 # We have'XXX':# This is a special code used to denote that no specific currency
 # is involved. It's often used in financial contexts to represent a placeholder
 # or a non-standard situation.
-
+# 
 # We also notice that the vast majority is USD, some XXX and 
 # countable number of records for the rest of the currencies. 
 # We'll deal with this properly during data cleaning.
-# %%[Handling nan values of currency column]
+# %%
+# Handling nan values of currency column
 df_clean = df_clean.dropna(subset=['Currency'])
 df_clean.isna().sum()
 
@@ -132,8 +139,8 @@ df_clean['Size'].unique()
 #df_clean['Size']
 
 
-# %%[markdown]
-#Getting the count of apps of various sizes 
+# %%
+# Getting the count of apps of various sizes 
 countm_M=0
 countk_K=0
 countg_G=0
@@ -153,18 +160,18 @@ total_count=countm_M+countk_K+countg_G+count_varieswithdevice_nan
 print(total_count)
 print(len(df_clean['Size']))
 
-#%%[markdown]
-#The various sizes of apps are listed down below
+# %% 
+# The various sizes of apps are listed down below
 print(f'Apps of size in megabytes are {countm_M}')
 print(f'Apps of size in kilobytes are {countk_K}')
 print(f'Apps of size in gigabytes are {countg_G}')
-print(f'Apps of varibale sizes and also of nan values are {count_varieswithdevice_nan}')
+print(f'Apps of variable sizes and also of nan values are {count_varieswithdevice_nan}')
 
 
 
 
-#%%[markdown]
-#Here I am coverting apps of sizeM(megabytes) 
+# %%
+# Here I am converting apps of sizeM(megabytes) 
 # into their corresponding values in kilobytes(k)
 def convert_m_to_kb(x):
     if 'M' in x or 'm' in x:
@@ -185,8 +192,8 @@ print(f"Count of 'm' or 'M' in the 'size' column: {count_of_m_or_M}")
 df_clean['Size']
 
 
-#%%[markdown]
-# Here I am coverting apps of size k(kilobytes) into 
+# %%
+# Here I am converting apps of size k(kilobytes) into 
 # numeric value of the given kilobytes(k) in the datframe
 def convert_k_to_numeric(x):
     try:
@@ -209,8 +216,8 @@ print(f"Count of 'k' or 'K' in the 'size' column: {count_of_k_or_K}")
 df_clean['Size']
 
 
-# %%[markdown]
-# Here I am coverting apps of size G(Gigabytes) 
+# %%
+# Here I am converting apps of size G(Gigabytes) 
 # into their corresponding values in kilobytes(k)
 def convert_g_to_numeric(x):
     if 'G' in x or 'g' in x:
@@ -244,26 +251,19 @@ if count_varieswithdevice_nan == varieswithdevice_nan:
 print(df_clean['Size'].isna().sum())
     
 
-
-
-#%%[markdown]
-
 # %%
 df_clean['Minimum Android']
 df_clean['Minimum Android'].unique()
 df_clean['Minimum Android'].value_counts()
 
-
 # %%
 df_clean['Minimum Android'].isna().sum()
 # %%[markdown]
-#Since we have 6526 rows consisting of nan we can afford
-# to drop it .Considering the amount of data we have it should not posess a problem
+# Since we have 6526 rows consisting of nan we can afford
+# to drop it .Considering the amount of data we have it should not possess a problem
 df_clean = df_clean.dropna(subset=['Minimum Android'])
 df_clean.isna().sum()
 
-
-df_clean.isna().sum()
 # %%[markdown]
 # We notice that Developer website and privacy policy have too much NA values. 
 # Released column has 48371 NA values. We are not going to use these columns for model building.
@@ -271,23 +271,20 @@ df_clean.isna().sum()
 # So for now, we'll keep the missing values since it doesn't pose an issue.
 
 # %%[markdown]
-# Exploratory Data Analysis
-# 1-Data Cleaning
-# 2-Feature Engineering
-# 3-Visualisation
-# [These are the three things will focus on in Eda]
-             
+## Exploratory Data Analysis
 # %%
 print(df_clean['Category'].nunique())
 sns.histplot(data=df_clean, x='Category', kde=True, )
 plt.xticks(rotation = 90, size = 6)
 plt.show()
+# %%[markdown]
 # We notice that there are 48 different categories, and education category has the highest count.
 # The distribution is very uneven with a right tail.
 # There are many categories with very less values.
 # Let's take a look at the values once
 # %%
 df_clean['Category'].value_counts(normalize=True)
+# %%[markdown]
 # On having a clearer look at the data we notice that there are some categories with minor
 # spelling changes which are the same. Ex: 'Education' and 'Educational'.
 # Lets clean such categories by combining the values into one.
@@ -323,8 +320,9 @@ plt.show()
 # %%
 # Now let's check the number of ratings.
 df_clean['Rating Count'].describe().apply('{:.5f}'.format)
+# %%[markdown]
 # Whoa!! Too high standard deviation and 75% of data is below 42 
-# while the maximum vlaue is greater than 1.3 million.
+# while the maximum value is greater than 1.3 million.
 # Let's 1st try to see the entire plot and then we'll see only the ones
 # below 42 to get a better idea
 # %%
@@ -359,13 +357,16 @@ df_clean[df_clean['Rating Count']>1e6]['Category'].value_counts().head(6).plot.b
 plt.title("Top 6 apps with the most rating counts by Category")
 plt.xlabel("Count")
 plt.show()
-# Action apps have the most number of ratings. 
-# 74 of total apps with more than a million reviews belong to action category. These could be the action games which are super popular.
-# Sports and music have the same number of ratings and are in top 5.
-# Tools category also has 54 apps over a million reviews. These could be the productivity tool apps that many people use on a regular basis.
+# %%[markdown]
+# * Action apps have the most number of ratings. 
+# * 74 of total apps with more than a million reviews belong to action category. These could be the action games which are super popular.
+# * Sports and music have the same number of ratings and are in top 5.
+# * Tools category also has 54 apps over a million reviews. These could be the productivity tool apps that many people use on a regular basis.
+# 
 # Lets just see some of these apps.
 # %%
 df_clean[df_clean['Rating Count']>1e6][df_clean['Category']=='Action'][['App Name', 'Rating', 'Rating Count']].head(10)
+# %%[markdown]
 # As we suspected, it's the most popular action games, such as Shadow Fight 2, PUBG, Among Us, etc.
 
 # %%
@@ -381,7 +382,7 @@ df_clean['Maximum Installs'].describe()
 
 # %%
 # Handling : 
-# Relased col, Privacy policy, ad-supported, in app purchases, editors choice and scraped time
+# Released col, Privacy policy, ad-supported, in app purchases, editors choice and scraped time
 # %%
 # released column
 sample_values1 = df_clean['Released'].sample(n=20)
@@ -391,7 +392,7 @@ print(sample_values1)
 df_clean['Released'] = pd.to_datetime(df_clean['Released'], errors='coerce')
 median_date = df_clean['Released'].median()  # Calculate the median date
 df_clean['Released'].fillna(median_date, inplace=True)
-df_clean['Released'].isna().sum() #recheking for missing values
+df_clean['Released'].isna().sum() #rechecking for missing values
 
 # %%
 # Calculating age of the app, by extracting the release date from the current date
@@ -401,7 +402,7 @@ df_clean['Month Released']= df_clean['Released'].dt.month
 df['Day of week Released']= df_clean['Released'].dt.dayofweek
 
 current_date=pd.to_datetime('now')
-df_clean['App Age'] = round((current_date - df_clean['Released']).dt.days / 365.25,2) if pd.__version__ >= '1.1.0' else (current_date - df['Released']).days / 365.25
+df_clean['App Age'] = round((current_date - df_clean['Released']).dt.days / 365.25, 2) if pd.__version__ >= '1.1.0' else (current_date - df['Released']).dt.days / 365.25
 #print(df['App Age'])
 # %%
 # visualization of released column
@@ -479,7 +480,7 @@ df_clean['Editors Choice'].head(10)
 print('Editor_counts:\n', df_clean['Editors Choice'].value_counts())
 
 # %%
-# Visulization of the Editor's choice app
+# Visualization of the Editor's choice app
 
 plt.figure(figsize=(8, 5))
 sns.countplot(x='Editors Choice', data=df_clean, palette='viridis',legend= False, hue = 'Editors Choice')
@@ -499,15 +500,16 @@ df_clean = df_clean.drop('Scraped Time', axis=1)
 # %%
 # dev id, dev website, dev email, released, last updated, content rating
 df_clean['Content Rating'].value_counts()
-# %%
+# %%[markdown]
 # Upon running the value counts function on the Content Rating column, it is observed that
 # there are a total of six categories under which the apps have been sub-divided.
 # The names of the categories seem to be a bit confusing ('Everyone'/ 'Everyone 10+'), so we'll provide better distinction to each.
+# %%
 df_clean['Content Rating'] = df_clean['Content Rating'].replace('Mature 17+', '17+')
 df_clean['Content Rating'] = df_clean['Content Rating'].replace('Everyone 10+', '10+')
 df_clean['Content Rating'] = df_clean['Content Rating'].replace('Adults only 18+', '18+')
 # %%
-# We will now try to visualise the distribution of apps across different content rating categories
+# We will now try to visualize the distribution of apps across different content rating categories
 df_clean['Content Rating'].value_counts(normalize=True).plot.barh()
 # The bar plot shows that most of the apps are labeled as 'Everyone', and in comparison, apps rated
 # as '18+' are almost negligible.
@@ -607,27 +609,19 @@ fig.update_layout(
     height=500
 )
 fig.show()
-# %%
-
-# fig = px.scatter(df_clean, x="Rating", y="Price", color="Content Rating",
-#                   hover_data=['Category'])
-# fig.show()
-# fig.update_layout(
-#     xaxis_title="Rating",
-#     yaxis_title="Count of Apps",
-# )
 
 # %%
-# %%[markdown]
-#Analysing the currency column
+# %%
+# Analysing the currency column
 currency_counts = df_clean['Currency'].value_counts()
 plt.figure(figsize=(10, 6))
 plt.pie(currency_counts, labels=currency_counts.index, autopct='%1.2f%%', startangle=90)
 plt.title('Distribution of Currencies')
 plt.legend(currency_counts.index, loc='center left', bbox_to_anchor=(1, 0.5))
 plt.show()
-#Conclusion:
-#The dataset is heavily dominated by transactions in U.S. Dollars,
+# %%[markdown]
+### Conclusion:
+# The dataset is heavily dominated by transactions in U.S. Dollars,
 # as evidenced by the high probability associated with USD.
 # The low probabilities for other currencies suggest that these alternate currencies 
 # are rare or infrequently represented in the dataset. 
@@ -635,9 +629,10 @@ plt.show()
 # the currency information is unspecified or missing, albeit at 
 # a very low probability.
 
-#%%
+# %%
 df_clean['Currency'].value_counts(normalize=True)
-#USD (U.S. Dollar): The probability of encountering the U.S. Dollar
+# %%[markdown]
+# USD (U.S. Dollar): The probability of encountering the U.S. Dollar
 # in the dataset is extremely high, at approximately 99.946%. 
 # This suggests that the overwhelming majority of entries in the 
 # dataset are denominated in U.S. Dollars.
@@ -671,7 +666,7 @@ df_clean['Minimum Android'] = df_clean['Minimum Android'].apply(extract_and_roun
 print(df_clean['Minimum Android'])
 
  
-# %%[markdown]
+# %%
 #Visualising Minimum android Column
 plt.figure(figsize=(10, 6))
 df_clean['Minimum Android'].value_counts().plot(kind='bar', color='skyblue')
@@ -680,21 +675,23 @@ plt.xlabel('Minimum Android Version')
 plt.ylabel('Count')
 plt.xticks(rotation=90, ha='right')
 plt.show()
-# Android Version 5:
+# %%[markdown]
+# * Android Version 5:
 # This version appears most frequently in the dataset, with a count
 # of (please enter number as data will be changed), indicating a significant presence of apps designed for
 # Android version 5.
-# Android Version 4: The second most common version, appearing
+# * Android Version 4: The second most common version, appearing
 # 338,684 times.
-# Android Version 6: Appears 149,101 times.
-# Android Version 3: Appears 144,798 times.
-# Android Version 7: Appears 34,407 times.
-# Varies with Device: Indicates cases where the minimum Android
+# * Android Version 6: Appears 149,101 times.
+# * Android Version 3: Appears 144,798 times.
+# * Android Version 7: Appears 34,407 times.
+# * Varies with Device: Indicates cases where the minimum Android
 # version is flexible or unspecified, occurring 24,322 times.
-# Android Version 8: Appears 16,853 times.
-# Android Version 2: Appears 14,025 times.
-# Android Version 1: The least common version in the dataset,
+# * Android Version 8: Appears 16,853 times.
+# * Android Version 2: Appears 14,025 times.
+# * Android Version 1: The least common version in the dataset,
 # appearing only 309 times.
+# 
 # These numbers provide insights into the distribution of minimum 
 # Android versions within the dataset, helping to understand the 
 # prevalence of different Android versions among the apps.
@@ -725,43 +722,20 @@ ax2.tick_params(axis='x', rotation=90)
 #Apps with 
 
 plt.show()
-#%%
-# need to correct it
-# df_clean['Rating Count'] = df_clean['Rating Count'].astype(str)
-# df_clean['Rating'] = df_clean['Rating'].astype(str)
-
-# fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(17, 7))
-
-# # Scatter plot 1: Rating counts by app size
-# sns.scatterplot(x='Size', y='Rating Count', data=df_clean, ax=ax1)
-# ax1.set_xlabel('App Size (kB)')
-# ax1.set_ylabel('Rating Counts')
-# ax1.set_title('Relationship between App Size and Rating Counts')
-
-# # Scatter plot 2: Rating by app size
-# sns.scatterplot(x='Size', y='Rating', data=df_clean, ax=ax2)
-# ax2.set_xlabel('App Size (kB)')
-# ax2.set_ylabel('Rating')
-# ax2.set_title('Relationship between App Size and Rating')
-
-# plt.tight_layout()
-# plt.show()
-
-
-# #%%[]
-
 
 # %%
 df_clean.head()
 # %%[markdown]
 ## SMART QUESTIONS
 
-# %%
+# %%[markdown]
 # 1. Is there a correlation between the "Minimum Android" version and the "Rating" of the apps?
+# 
 # H_0: There is no significant difference in the mean "Rating" across all categories of "Minimum Android."
+# 
 # H_1: At least one pair of categories has a significantly different mean "Rating"
 
-
+# %%
 sns.barplot(x='Minimum Android', y='Rating', data=df_clean)
 plt.title("Rating vs. Minimum Android version")
 plt.show()
@@ -781,7 +755,9 @@ else:
 
 # %%[markdown]
 # 2. Does having a website impact its rating?
+# 
 # H_0: There is no significant difference in the mean rating for developer website availability.
+# 
 # H_1: There is a significant difference in the mean rating for developer website availability.
 
 # %%
@@ -799,17 +775,19 @@ t_test_website
 # Therefore, having a developer website does impact an app's rating.
 # %%[markdown]
 # 3. Do price (yes) and category (no) significantly impact the popularity of an app in terms of installs?
+# 
 # We'll test it in 2 parts- one for price and the other for different categories. 
 # Let's first look at the plot.
 # %%
 df_clean['Price_Status'] = df_clean['Price'].apply(lambda x: 'Free' if x == 0 else 'Paid')
 df_clean['Price_Status'].value_counts()
 # %%
-sns.scatterplot(x='Price_Status', y='Average Installs', hue="Editors Choice", data=df_clean, s=100)
-plt.title('Price status vs Average installs by Editors Choice')
-plt.show()
+# sns.scatterplot(x='Price_Status', y='Average Installs', hue="Editors Choice", data=df_clean, s=100)
+# plt.title('Price status vs Average installs by Editors Choice')
+# plt.show()
 # %%[markdown]
 # H_0: There is no significant difference in the mean number of installs across different categories.
+# 
 # H_1: At least one pair of categories has a significant difference in mean number of installs.
 # %%
 # from scipy.stats import f_oneway
@@ -825,10 +803,11 @@ plt.show()
 #             print("The means of 'Average Installs' are significantly different among different categories.")
 #     else:
 #             print("There is no significant difference in the means of 'Average Installs' among different categories.")
-# %%
+# %%[markdown]
 # We get p_value < alpha for all the categories. So, we reject our H_0 and conclude that the different categories are significant.
-# %%
+# 
 # H_0: There is no significant difference in the mean installs for price status of apps.
+# 
 # H_1: There is a significant difference in the mean installs for price status of apps.
 
 # %%
@@ -848,6 +827,7 @@ df_clean['Editors Choice'] = pd.factorize(df_clean['Editors Choice'])[0]
 df_clean['Editors Choice'].value_counts()
 # %%[markdown]
 # H_0: There is no significant difference in the mean rating for editor's choice.
+# 
 # H_1: There is a significant difference in the mean rating for editor's choice.
 #%%
 sns.barplot(x='Editors Choice', y='Rating', data=df_clean, hue='Editors Choice')
@@ -864,9 +844,10 @@ t_test_rating
 # There is a difference in the mean rating for whether and app is editor's choice or not.
 # %%[markdown]
 # H_0: There is no significant difference in the mean installs for editor's choice.
+# 
 # H_1: There is a significant difference in the mean installs for editor's choice.
 
-#%% REVIEW
+# %% REVIEW
 sns.barplot(x='Editors Choice', y='Average Installs', data=df_clean)
 plt.xlabel("Editor's Choice")
 plt.ylabel('Average Installs')
@@ -882,7 +863,9 @@ t_test_install
 
 # %%[markdown]
 # 5. Does app size affect the number of installs?
+# 
 # H_0: The app size does not affect the number of installs
+# 
 # H_1: The app size affects the number of installs
 
 # %%
@@ -892,6 +875,7 @@ df_clean['Size'].unique()
 df_clean['Size'] = pd.to_numeric(df_clean['Size'], errors='coerce')
 df_clean['Minimum Installs'] = df_clean['Minimum Installs'].astype(float)
 df_clean['Maximum Installs'] = df_clean['Maximum Installs'].astype(float)
+# %%
 # Let's visualize and see 1st.
 sns.scatterplot(x= 'Size', y = 'Minimum Installs',data = df_clean, alpha=0.5)
 plt.title('Scatter Plot: Size vs. Minimum Installs')
@@ -923,7 +907,7 @@ print(model_max_installs.summary())
 # The diagnostic tests on residuals suggest that there might be violations of model assumptions, particularly regarding the normality of residuals.
 # The large condition number in both models suggests potential multicollinearity issues, indicating that predictor variables may be correlated.
 # In conclusion, while the models show statistical significance, the low R-squared values and potential issues with residuals and multicollinearity indicate that the current models may not provide a strong and reliable explanation for the variations in 'Minimum Installs' and 'Maximum Installs.' Further refinement, exploration, and consideration of additional variables may be necessary for a more robust analysis
-
+# 
 # Let's just try a simple correlation and see if it conforms with our model's views.
 # We'll use the average number of installs here.
 # %%
@@ -938,34 +922,24 @@ else:
 
 # So it does, therefore, the app size affects the number of installs
 
+# %%[markdown]
+## Data Preparation
+
 # %%
-# Assuming df_clean is your DataFrame
 categorical_columns = df_clean.select_dtypes(include=['object']).columns
 numerical_columns = df_clean.select_dtypes(include=['number']).columns
-
-# Display the lists of categorical and numerical columns
 print("Categorical Columns:", categorical_columns)
 print("Numerical Columns:", numerical_columns)
-
-
-# Assuming df_clean is your DataFrame
-
 # %%
 df_clean = df_clean.drop('Free', axis=1)
-
-# %%
 df_clean["Ad Supported"] = pd.factorize(df_clean["Ad Supported"])[0]
-# %%
 df_clean["In App Purchases"] = pd.factorize(df_clean["In App Purchases"])[0]
 # %%
 df_model_data = df_clean
 #%%
 df_model_data.drop(['App Id','Developer Website','Developer Email','Developer Id','Privacy Policy', 'Average Installs','Month Released', 'Year Released','Year Last Updated'],axis=1,inplace=True)
 df_model_data.head()
-# #%%
 
-# # %%
-# train_X,test_X,train_Y,test_Y=train_test_split(x,y,test_size=0.15,random_state=42)
 # %%
 categorical_columns=[]
 for col in df_model_data.columns:
@@ -993,30 +967,115 @@ df_model_data['Currency']=df_model_data['Currency'].apply(currency_to_INR)
 #  %%
 df_model_data.Price=df_model_data.Price*df_model_data.Currency
 df_model_data.Price.value_counts()
-#%%
+# %%
 df_model_data['Price_Status']=lbl_category.fit_transform(df_model_data['Price_Status'])
-# %%
 df_model_data['Ad Supported']=lbl_category.fit_transform(df_model_data['Ad Supported'])
-# %%
 df_model_data['In App Purchases']=lbl_category.fit_transform(df_model_data['In App Purchases'])
-
- # %%
 df_model_data['Editors Choice']=lbl_category.fit_transform(df_model_data['Editors Choice'])
-
 # %%
 df_model_data.drop(['Released','Last Updated','Currency'],inplace=True,axis=1)
 # %%
 df_model_data.head()
 # %%
 # #train_data.drop(['has_developer_website','Year Last Updated','Has_PrivacyPolicy','Month Released','Year Released'],inplace=True,axis=1)
-# # %%
-
 # %%
-df_model_data.drop(['App Name'],inplace=True,axis=1)
-#%%
+df_model_data.drop(['App Name'], inplace=True, axis=1)
+# %%
+# df_model_data.dtypes
+df_model_data['Minimum Android'] = df_model_data['Minimum Android'].astype('int32')
+# %%
+plt.figure(figsize=(20,15))
+sns.heatmap(df_model_data.corr(),annot=True)
+plt.title("Heatmap of the final data")
+plt.plot()
+plt.show()
+# %%
 y=df_model_data["Rating"]
 x=df_model_data.drop("Rating", axis=1)
 train_X,test_X,train_Y,test_Y=train_test_split(x,y,test_size=0.15,random_state=42)
+# %%[markdown]
+## Model Building
+# %%[markdown]
+# Since R2 score increases on increasing the number of features, and our data have too many features.
+# We will use RMSE to evaluate our regression model. We will use the basic Linear Regression model as
+# the baseline. Before this, let's set a seed to get avoid variable results.
+# %%
+np.random.seed(7)
+model_lr=LinearRegression()
+model_lr.fit(train_X,train_Y)
+# %%
+print('Train RMSE Linear Regression: ', mean_squared_error(train_Y, model_lr.predict(train_X)))
+print('Test RMSE Linear Regression: ',mean_squared_error(test_Y, model_lr.predict(test_X)))
+# %%[markdown]
+# We get an ~ 3.96 RMSE value in train set and just a bit more, 3.98, on test set.
+# Well, good thing that our model isn't overfitting much.
+# 
+# Now let's try some other models and see their performance
+# %%
+np.random.seed(7)
+model_sgd = SGDRegressor()
+model_sgd.fit(train_X, train_Y)
+# %%
+print('Train RMSE SGD Regression: ',mean_squared_error(train_Y, model_sgd.predict(train_X)))
+print('Test RMSE SGD Regression: ',mean_squared_error(test_Y, model_sgd.predict(test_X)))
+# %%[markdown]
+# We get a worse RMSE than the Linear model, it has now increased to 5.57 in train and 5.26 in test.
+# Let's try using better models to bring it under 1. 
+
+# %%
+np.random.seed(7)
+model_lgbm = LGBMRegressor()
+model_lgbm.fit(train_X, train_Y)
+# %%
+print('Train RMSE LGBM Regression: ',mean_squared_error(train_Y, model_lgbm.predict(train_X)))
+print('Test RMSE LGBM Regression: ',mean_squared_error(test_Y, model_lgbm.predict(test_X)))
+# %%[markdown]
+# That was amazing, so gradient boosting algorithm works amazing in this and gives an RMSE of 0.19
+# This is extremely good, let's try a decision tree to see how that performs
+# %%
+np.random.seed(7)
+model_dt=DecisionTreeRegressor(max_depth=9)
+model_dt.fit(train_X,train_Y)
+# %%
+print('Train RMSE Decision Tree Regression: ',mean_squared_error(train_Y, model_dt.predict(train_X)))
+print('Test RMSE Decision Tree Regression: ',mean_squared_error(test_Y, model_dt.predict(test_X)))
+# %%[markdown]
+# We get a great model here as well, with an RMSE of 0.2. But the LGBM is still the better one.
+# We'll consider LGBM as our best model. Now let's try to tune that for our final model
+# 
+# We'll use bayesian search instead of the regular grid search because our dataset (search space) is huge and
+# we want a computationally efficient tuning algorithm
+# %%
+# %%
+np.random.seed(7)
+param_grid = {
+    "learning_rate": [0.01, 0.05, 0.1],
+    "num_leaves": [15, 31],
+    "n_estimators": [100, 200],
+    "max_depth": [-1, 8, 16],
+    "reg_alpha": [1e-3, 1e-1]
+}
+bayesian_search = BayesSearchCV(model_lgbm, param_grid, n_iter=10, 
+                                cv=3, scoring="neg_root_mean_squared_error")
+np.int = int
+bayesian_search.fit(train_X, train_Y)
+# %%
+print("Best parameters found: ", bayesian_search.best_params_)
+# %%
+print('Train RMSE LGBM Regression(Optimized): ',mean_squared_error(train_Y, bayesian_search.predict(train_X)))
+print('Test RMSE LGBM Regression(Optimized): ',mean_squared_error(test_Y, bayesian_search.predict(test_X)))
+# %%[markdown]
+# Not much of an optimization but we have reduced the RMSE value from 0.1934 to 0.1919
+# The best set of hyperparameters are:
+# * Learning rate: 0.1
+# * max_depth: 16
+# * n_estimators: 153
+# * num_leaves: 31
+# * reg_alpha: 0.06383671801269114
+# 
+# The finale RMSE Value achieved:
+# * Train RMSE: 0.1919
+# * Test RMSE : 0.1936
 # %%
 # %%
 plt.figure(figsize=(20,15))
