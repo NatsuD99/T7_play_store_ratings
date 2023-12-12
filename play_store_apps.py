@@ -12,7 +12,8 @@ import math
 import plotly.express as px
 sns.set_palette('ocean_r')
 import scipy.stats as stats
-from scipy.stats import kruskal
+from scipy.stats import kruskal, pearsonr, f_oneway
+import statsmodels.api as sm
  # %% [markdown]
 ## Import Data
 # %%
@@ -693,6 +694,9 @@ plt.show()
 # These numbers provide insights into the distribution of minimum 
 # Android versions within the dataset, helping to understand the 
 # prevalence of different Android versions among the apps.
+# %%
+# We can't work with the varies with device, so we'll remove those
+df_clean = df_clean[df_clean['Minimum Android']!= 'Varies with device']
 #%%
 grouped_df1 = df_clean.groupby('Minimum Android')['Rating Count'].sum().to_frame(name='Rating Count').sort_values(by='Rating Count', ascending=False)
 grouped_df2 = df_clean.groupby('Minimum Android')['Rating'].sum().to_frame(name='Rating').sort_values(by='Rating', ascending=False)
@@ -745,56 +749,64 @@ plt.show()
 
 # %%
 df_clean.head()
-# %%
-# Do price (yes) and category (no) significantly impact the popularity of an app in terms of installs?
-# Are there any significant differences in "Rating" (yes) and "Installs" (yes) between "Editor's Choice" apps and
-# regular apps?
-df_clean['Average Installs'] = df_clean[['Minimum Installs', 'Maximum Installs']].mean(axis=1)
-df_clean['Minimum Installs'].value_counts(normalize=True).plot.barh()
-# %%
-df_clean["Minimum Installs"].describe()
-# %%
-df_clean['Editors Choice'] = pd.factorize(df_clean['Editors Choice'])[0]
-# %%
-# %%
-df_clean['Editors Choice'].value_counts()
-#%%
-sns.barplot(x='Editors Choice', y='Rating', data=df_clean, hue='Editors Choice')
-plt.xlabel("Editor's Choice")
-plt.ylabel('Rating')
-plt.title("Bar plot between Editor's Choice and Rating")
+# %%[markdown]
+## SMART QUESTIONS
 
 # %%
-t_test_rating = stats.ttest_ind(df_clean[df_clean['Editors Choice'] == 0]['Rating'],
-                                df_clean[df_clean['Editors Choice'] == 1]['Rating'])
+# 1. Is there a correlation between the "Minimum Android" version and the "Rating" of the apps?
+# H_0: There is no significant difference in the mean "Rating" across all categories of "Minimum Android."
+# H_1: At least one pair of categories has a significantly different mean "Rating"
+
+
+sns.barplot(x='Minimum Android', y='Rating', data=df_clean)
+plt.title("Rating vs. Minimum Android version")
+plt.show()
+# It's difficult to notice anything peculiar other than android versions 2 and 3 have higher average ratings
+# and higher android versions have relatively lower avg ratings.
+# Let's try an ANOVA test since Minimum android has 8 different versions
 # %%
-t_test_rating
-#%% REVIEW
-sns.barplot(x='Editors Choice', y='Average Installs', data=df_clean)
-plt.xlabel("Editor's Choice")
-plt.ylabel('Average Installs')
-plt.title("Bar plot between Editor's Choice and Rating")
+minimum_android_categories = df_clean['Minimum Android'].unique()
+category_data = [df_clean[df_clean['Minimum Android'] == category]['Rating'] for category in minimum_android_categories]
+f_stat, p_value_anova = f_oneway(*category_data)
+print(f'{p_value_anova:.3f}')
+if p_value_anova < 0.05:
+    print("There is a significant difference.")
+else:
+    print("There is no significant difference.")
+# We get p value < alpha (0.05), so we reject H_0. Hence, at lease one pair of categories has a significantly different mean rating.
+
+# %%[markdown]
+# 2. Does having a website impact its rating?
+# H_0: There is no significant difference in the mean rating for developer website availability.
+# H_1: There is a significant difference in the mean rating for developer website availability.
+
 # %%
-t_test_install = stats.ttest_ind(df_clean[df_clean['Editors Choice'] == 0]['Average Installs'],
-                                df_clean[df_clean['Editors Choice'] == 1]['Average Installs'])
+sns.barplot(x='has_developer_website', y='Rating', data=df_clean)
+plt.title("Developer Website availability vs. Rating")
+plt.show()
+# It shows an app having a developer website has a higher mean rating.
+# Let's do a 2 sample independent ttest to confirm it.
+
 # %%
-t_test_install
+t_test_website = stats.ttest_ind(df_clean[df_clean['has_developer_website'] == 0]['Rating'],
+                                df_clean[df_clean['has_developer_website'] == 1]['Rating'])
+t_test_website
+# We get an extremely small p-value, which indicates that we reject our null and accept H_1.
+# Therefore, having a developer website does impact an app's rating.
+# %%[markdown]
+# 3. Do price (yes) and category (no) significantly impact the popularity of an app in terms of installs?
+# We'll test it in 2 parts- one for price and the other for different categories. 
+# Let's first look at the plot.
 # %%
 df_clean['Price_Status'] = df_clean['Price'].apply(lambda x: 'Free' if x == 0 else 'Paid')
 df_clean['Price_Status'].value_counts()
 # %%
-t_test_price_min = stats.ttest_ind(df_clean[df_clean['Price_Status'] == 'Free']['Average Installs'],
-                                df_clean[df_clean['Price_Status'] == 'Paid']['Average Installs'])
-# %%
-t_test_price_min
-# %%
-plt.figure(figsize=(10, 6))
-sns.scatterplot(x='Price_Status', y='Average Installs', hue="Editors Choice", data=df_clean, palette='viridis', s=100)
-
-
-
-
-# %%
+sns.scatterplot(x='Price_Status', y='Average Installs', hue="Editors Choice", data=df_clean, s=100)
+plt.title('Price status vs Average installs by Editors Choice')
+plt.show()
+# %%[markdown]
+# H_0: There is no significant difference in the mean number of installs across different categories.
+# H_1: At least one pair of categories has a significant difference in mean number of installs.
 # %%
 # from scipy.stats import f_oneway
 # for category in df_clean['Category'] :
@@ -810,46 +822,87 @@ sns.scatterplot(x='Price_Status', y='Average Installs', hue="Editors Choice", da
 #     else:
 #             print("There is no significant difference in the means of 'Average Installs' among different categories.")
 # %%
-
+# We get p_value < alpha for all the categories. So, we reject our H_0 and conclude that the different categories are significant.
+# %%
+# H_0: There is no significant difference in the mean installs for price status of apps.
+# H_1: There is a significant difference in the mean installs for price status of apps.
 
 # %%
-## GOURAB
+t_test_price_min = stats.ttest_ind(df_clean[df_clean['Price_Status'] == 'Free']['Average Installs'],
+                                df_clean[df_clean['Price_Status'] == 'Paid']['Average Installs'])
+# %%
+t_test_price_min
+# We get an extremely small p_value, so we reject null and conclude that
+# there's a significant diff. b/w mean installs for price status
+
+# %%[markdown]
+# 4. Are there any significant differences in "Rating" (yes) and "Installs" (yes) between "Editor's Choice" apps and
+# regular apps?
+# %%
+df_clean['Average Installs'] = df_clean[['Minimum Installs', 'Maximum Installs']].mean(axis=1)
+df_clean['Editors Choice'] = pd.factorize(df_clean['Editors Choice'])[0]
+df_clean['Editors Choice'].value_counts()
+# %%[markdown]
+# H_0: There is no significant difference in the mean rating for editor's choice.
+# H_1: There is a significant difference in the mean rating for editor's choice.
+#%%
+sns.barplot(x='Editors Choice', y='Rating', data=df_clean, hue='Editors Choice')
+plt.xlabel("Editor's Choice")
+plt.ylabel('Rating')
+plt.title("Editor's Choice vs. Rating")
+plt.show()
+# %%
+t_test_rating = stats.ttest_ind(df_clean[df_clean['Editors Choice'] == 0]['Rating'],
+                                df_clean[df_clean['Editors Choice'] == 1]['Rating'])
+# %%
+t_test_rating
+# An extremely low p_value, so we reject null yet again. 
+# There is a difference in the mean rating for whether and app is editor's choice or not.
+# %%[markdown]
+# H_0: There is no significant difference in the mean installs for editor's choice.
+# H_1: There is a significant difference in the mean installs for editor's choice.
+
+#%% REVIEW
+sns.barplot(x='Editors Choice', y='Average Installs', data=df_clean)
+plt.xlabel("Editor's Choice")
+plt.ylabel('Average Installs')
+plt.title("Editor's Choice vs. Rating")
+plt.show()
+# %%
+t_test_install = stats.ttest_ind(df_clean[df_clean['Editors Choice'] == 0]['Average Installs'],
+                                df_clean[df_clean['Editors Choice'] == 1]['Average Installs'])
+# %%
+t_test_install
+# Also a smaller p-value, so we reject H_0 and there is a significant difference in the mean installs for editor's choice.
+
+
+# %%[markdown]
+# 5. Does app size affect the number of installs?
+# H_0: The app size does not affect the number of installs
+# H_1: The app size affects the number of installs
+
+# %%
+# Cleaning up the data a bit.
 df_clean['Size'].unique()
 #%%
 df_clean['Size'] = pd.to_numeric(df_clean['Size'], errors='coerce')
 df_clean['Minimum Installs'] = df_clean['Minimum Installs'].astype(float)
 df_clean['Maximum Installs'] = df_clean['Maximum Installs'].astype(float)
-
-# %%[markdown]
-#I have used Pearson correlation coefficient to measure the linear relationship
-# # between "Size" and "Minimum Installs" or "Maximum Installs."
-# correlation_min_installs = df_clean['Size'].corr(df_clean['Minimum Installs'])
-# correlation_max_installs = df_clean['Size'].corr(df_clean['Maximum Installs'])
-
-# # %%
-# # Select the columns for the correlation matrix
-# selected_columns = ['Size', 'Minimum Installs', 'Maximum Installs']
-# correlation_matrix = df_clean[selected_columns].corr()
-
-# Plot the heatmap
-# plt.figure(figsize=(8, 6))
-# sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f", linewidths=.5)
-# plt.title('Correlation Matrix')
-# plt.show()
-#%%
+# Let's visualize and see 1st.
 sns.scatterplot(x= 'Size', y = 'Minimum Installs',data = df_clean, alpha=0.5)
 plt.title('Scatter Plot: Size vs. Minimum Installs')
 plt.xlabel('Size')
 plt.ylabel('Minimum Installs')
 plt.show()
-
+# We see patterns where, the highest minimum installs are only of apps with lower size.
+# For apps with a greater size, minimum installs in very less.
+# App size should affect the number of installs. Let see.
 
 # %%
-#Performing linear regression to quantify the relationship between app size
+# Performing linear regression to quantify the relationship between app size
 # and the number of installs.This code uses the Ordinary Least Squares (OLS)
 # method to fit a linear regression model for both "Minimum Installs" and 
 # "Maximum Installs" against "Size."
-import statsmodels.api as sm
 df_clean = df_clean.dropna(subset=['Size', 'Minimum Installs'])
 
 X = sm.add_constant(df_clean['Size'])
@@ -859,34 +912,27 @@ model_max_installs = sm.OLS(df_clean['Maximum Installs'], X).fit()
 print(model_min_installs.summary())
 print(model_max_installs.summary())
 
-#%%
+# %% [markdown]
+# Both models have very low R-squared values, indicating that the 'Size' variable, as included in the models, explains only a tiny fraction of the variability in 'Minimum Installs' and 'Maximum Installs.'
+# The statistical significance of the 'Size' coefficient suggests that there is a significant relationship between 'Size' and both 'Minimum Installs' and 'Maximum Installs.' However, the practical significance of these relationships is limited, given the low R-squared values.
+# The high AIC and BIC values may indicate model complexity or issues that need further exploration.
+# The diagnostic tests on residuals suggest that there might be violations of model assumptions, particularly regarding the normality of residuals.
+# The large condition number in both models suggests potential multicollinearity issues, indicating that predictor variables may be correlated.
+# In conclusion, while the models show statistical significance, the low R-squared values and potential issues with residuals and multicollinearity indicate that the current models may not provide a strong and reliable explanation for the variations in 'Minimum Installs' and 'Maximum Installs.' Further refinement, exploration, and consideration of additional variables may be necessary for a more robust analysis
 
-# Does app size affect the number of installs?
-
-
-# Assuming 'data1' and 'data2' are your numerical columns
-from scipy.stats import ttest_rel
-
-# Assuming 'data1' and 'data2' are your numerical columns
-stat, p_value = ttest_rel(df_clean['Size'], df_clean['Minimum Installs'])
-
-# Check the p-value to determine significance
+# Let's just try a simple correlation and see if it conforms with our model's views.
+# We'll use the average number of installs here.
+# %%
+df_clean['Average Installs'].isna().sum() # check, it's 0
+# %%
+corr_coef, p_value = pearsonr(df_clean['Size'], df_clean['Average Installs'])
+print(f'{p_value:.3f}')
 if p_value < 0.05:
     print("There is a significant difference.")
 else:
     print("There is no significant difference.")
 
-# Both models have very low R-squared values, indicating that the 'Size' variable, as included in the models, explains only a tiny fraction of the variability in 'Minimum Installs' and 'Maximum Installs.'
-
-# The statistical significance of the 'Size' coefficient suggests that there is a significant relationship between 'Size' and both 'Minimum Installs' and 'Maximum Installs.' However, the practical significance of these relationships is limited, given the low R-squared values.
-
-# The high AIC and BIC values may indicate model complexity or issues that need further exploration.
-
-# The diagnostic tests on residuals suggest that there might be violations of model assumptions, particularly regarding the normality of residuals.
-
-# The large condition number in both models suggests potential multicollinearity issues, indicating that predictor variables may be correlated.
-
-# In conclusion, while the models show statistical significance, the low R-squared values and potential issues with residuals and multicollinearity indicate that the current models may not provide a strong and reliable explanation for the variations in 'Minimum Installs' and 'Maximum Installs.' Further refinement, exploration, and consideration of additional variables may be necessary for a more robust analysis
+# So it does, therefore, the app size affects the number of installs
 
 # %%
 # Assuming df_clean is your DataFrame
