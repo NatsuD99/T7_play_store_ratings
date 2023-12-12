@@ -18,6 +18,7 @@ from currency_converter import CurrencyConverter
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
 from sklearn.tree import DecisionTreeRegressor
+from scipy.stats import f_oneway
  # %% [markdown]
 ## Import Data
 # %%
@@ -82,7 +83,7 @@ df_clean[['Installs', 'Minimum Installs']].head()
 # The values in minimum installs are object type with '+' appended at the end. 
 # It also has commas.
 # It also seems like the values in the 2 columns are same.
-# Let's remove those and have `Installs` as a numerical column and then compare 
+# Let's remove those and have Installs as a numerical column and then compare 
 # to check if the values are actually the same.
 # %%
 df_clean['Installs']=df_clean['Installs'].map(lambda x: x[:-1])
@@ -401,7 +402,7 @@ df_clean['Month Released']= df_clean['Released'].dt.month
 df['Day of week Released']= df_clean['Released'].dt.dayofweek
 
 current_date=pd.to_datetime('now')
-df_clean['App Age'] = round((current_date - df_clean['Released']).dt.days / 365.25,2) if pd.__version__ >= '1.1.0' else (current_date - df['Released']).days / 365.25
+df_clean['App Age'] = round((current_date - df_clean['Released']).dt.days / 365.25, 2) if pd.__version__ >= '1.1.0' else (current_date - df['Released']).dt.days / 365.25
 #print(df['App Age'])
 # %%
 # visualization of released column
@@ -805,9 +806,9 @@ t_test_website
 df_clean['Price_Status'] = df_clean['Price'].apply(lambda x: 'Free' if x == 0 else 'Paid')
 df_clean['Price_Status'].value_counts()
 # %%
-sns.scatterplot(x='Price_Status', y='Average Installs', hue="Editors Choice", data=df_clean, s=100)
-plt.title('Price status vs Average installs by Editors Choice')
-plt.show()
+# sns.scatterplot(x='Price_Status', y='Average Installs', hue="Editors Choice", data=df_clean, s=100)
+# plt.title('Price status vs Average installs by Editors Choice')
+# plt.show()
 # %%[markdown]
 # H_0: There is no significant difference in the mean number of installs across different categories.
 # H_1: At least one pair of categories has a significant difference in mean number of installs.
@@ -1018,3 +1019,17 @@ y=df_model_data["Rating"]
 x=df_model_data.drop("Rating", axis=1)
 train_X,test_X,train_Y,test_Y=train_test_split(x,y,test_size=0.15,random_state=42)
 # %%
+# %%
+plt.figure(figsize=(20,15))
+sns.heatmap(df_model_data.corr(),annot=True)
+plt.plot()
+# %%
+model_lr=LinearRegression()
+model_lr.fit(train_X,train_Y)
+print('r2_score of training data',r2_score(model_lr.predict(train_X).round(1),train_Y))
+print('r2_score of testing data',r2_score(model_lr.predict(test_X).round(1),test_Y))
+# %%
+model_dt=DecisionTreeRegressor(max_depth=9)
+model_dt.fit(train_X,train_Y)
+print('r2_score of training data',r2_score(model_dt.predict(train_X).round(1),train_Y))
+print('r2_score of testing data',r2_score(model_dt.predict(test_X).round(1),test_Y))
