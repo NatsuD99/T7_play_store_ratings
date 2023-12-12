@@ -796,19 +796,19 @@ sns.scatterplot(x='Price_Status', y='Average Installs', hue="Editors Choice", da
 
 # %%
 # %%
-from scipy.stats import f_oneway
-for category in df_clean['Category'] :
-    anova_result = f_oneway(*[df_clean['Average Installs'][df_clean['Category'] == category] for category in df_clean['Category'].unique()])
+# from scipy.stats import f_oneway
+# for category in df_clean['Category'] :
+#     anova_result = f_oneway(*[df_clean['Average Installs'][df_clean['Category'] == category] for category in df_clean['Category'].unique()])
 
-    # Print the ANOVA result
-    print(f"ANOVA Result: %d",category)
-    print("F-statistic:", anova_result.statistic)
-    print("P-value:", anova_result.pvalue)
+#     # Print the ANOVA result
+#     print(f"ANOVA Result: %d",category)
+#     print("F-statistic:", anova_result.statistic)
+#     print("P-value:", anova_result.pvalue)
 
-    if anova_result.pvalue < 0.05:
-            print("The means of 'Average Installs' are significantly different among different categories.")
-    else:
-            print("There is no significant difference in the means of 'Average Installs' among different categories.")
+#     if anova_result.pvalue < 0.05:
+#             print("The means of 'Average Installs' are significantly different among different categories.")
+#     else:
+#             print("There is no significant difference in the means of 'Average Installs' among different categories.")
 # %%
 
 
@@ -889,10 +889,20 @@ else:
 # In conclusion, while the models show statistical significance, the low R-squared values and potential issues with residuals and multicollinearity indicate that the current models may not provide a strong and reliable explanation for the variations in 'Minimum Installs' and 'Maximum Installs.' Further refinement, exploration, and consideration of additional variables may be necessary for a more robust analysis
 
 # %%
+# Assuming df_clean is your DataFrame
+categorical_columns = df_clean.select_dtypes(include=['object']).columns
+numerical_columns = df_clean.select_dtypes(include=['number']).columns
+
+# Display the lists of categorical and numerical columns
+print("Categorical Columns:", categorical_columns)
+print("Numerical Columns:", numerical_columns)
 
 
 # Assuming df_clean is your DataFrame
 
+# %%
+df_clean = df_clean.drop('Free', axis=1)
 
-
+# %%
+df_clean.columns
 # %%
