@@ -904,5 +904,7 @@ print("Numerical Columns:", numerical_columns)
 df_clean = df_clean.drop('Free', axis=1)
 
 # %%
-df_clean.columns
+df_clean["Ad Supported"] = pd.factorize(df_clean["Ad Supported"])[0]
+# %%
+df_clean["In App Purchases"] = pd.factorize(df_clean["In App Purchases"])[0]
 # %%
