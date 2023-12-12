@@ -12,8 +12,12 @@ import math
 import plotly.express as px
 sns.set_palette('ocean_r')
 import scipy.stats as stats
-from scipy.stats import kruskal, pearsonr, f_oneway
-import statsmodels.api as sm
+from scipy.stats import kruskal
+from sklearn.model_selection import train_test_split
+from currency_converter import CurrencyConverter
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score
+from sklearn.tree import DecisionTreeRegressor
  # %% [markdown]
 ## Import Data
 # %%
@@ -953,4 +957,64 @@ df_clean = df_clean.drop('Free', axis=1)
 df_clean["Ad Supported"] = pd.factorize(df_clean["Ad Supported"])[0]
 # %%
 df_clean["In App Purchases"] = pd.factorize(df_clean["In App Purchases"])[0]
+# %%
+df_model_data = df_clean
+#%%
+df_model_data.drop(['App Id','Developer Website','Developer Email','Developer Id','Privacy Policy', 'Average Installs','Month Released', 'Year Released','Year Last Updated'],axis=1,inplace=True)
+df_model_data.head()
+# #%%
+
+# # %%
+# train_X,test_X,train_Y,test_Y=train_test_split(x,y,test_size=0.15,random_state=42)
+# %%
+categorical_columns=[]
+for col in df_model_data.columns:
+    if df_model_data[col].dtype=='O':
+        categorical_columns.append(col)
+categorical_columns
+# %%
+lbl_content_rating=LabelEncoder()
+df_model_data['Content Rating']=lbl_content_rating.fit_transform(df_model_data['Content Rating'])
+#  %%
+df_model_data = df_model_data[df_model_data['Minimum Android'] != 'Varies with device']
+# %%
+lbl_category=LabelEncoder()
+df_model_data['Category']=lbl_category.fit_transform(df_model_data['Category'])
+# %%
+cc=CurrencyConverter()
+def currency_to_INR(data):
+    if data not in cc.currencies:
+        data=1
+    else:
+        data=cc.convert(1,data,'INR')
+    return data
+# %%
+df_model_data['Currency']=df_model_data['Currency'].apply(currency_to_INR)
+#  %%
+df_model_data.Price=df_model_data.Price*df_model_data.Currency
+df_model_data.Price.value_counts()
+#%%
+df_model_data['Price_Status']=lbl_category.fit_transform(df_model_data['Price_Status'])
+# %%
+df_model_data['Ad Supported']=lbl_category.fit_transform(df_model_data['Ad Supported'])
+# %%
+df_model_data['In App Purchases']=lbl_category.fit_transform(df_model_data['In App Purchases'])
+
+ # %%
+df_model_data['Editors Choice']=lbl_category.fit_transform(df_model_data['Editors Choice'])
+
+# %%
+df_model_data.drop(['Released','Last Updated','Currency'],inplace=True,axis=1)
+# %%
+df_model_data.head()
+# %%
+# #train_data.drop(['has_developer_website','Year Last Updated','Has_PrivacyPolicy','Month Released','Year Released'],inplace=True,axis=1)
+# # %%
+
+# %%
+df_model_data.drop(['App Name'],inplace=True,axis=1)
+#%%
+y=df_model_data["Rating"]
+x=df_model_data.drop("Rating", axis=1)
+train_X,test_X,train_Y,test_Y=train_test_split(x,y,test_size=0.15,random_state=42)
 # %%
