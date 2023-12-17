@@ -475,15 +475,11 @@ plt.show()
 
 # %%
 # Exploring Editor's Choice App
-
 print(df_clean['Editors Choice'].isnull().sum())
-df_clean['Editors Choice'].head(10)
-# %%
 print('Editor_counts:\n', df_clean['Editors Choice'].value_counts())
 
 # %%
 # Visualization of the Editor's choice app
-
 plt.figure(figsize=(8, 5))
 sns.countplot(x='Editors Choice', data=df_clean, palette='viridis',legend= False, hue = 'Editors Choice')
 
@@ -529,10 +525,8 @@ def splice_string(original_string, start, end=None):
 # %% 
 # The extracted year is stored in a new column, 'Year Last Updated'.
 df_clean['Year Last Updated'] = df_clean['Last Updated'].apply(lambda x: splice_string(x,8, ))
-# %%
 # Converting the new column to integer type
 df_clean['Year Last Updated'] = df_clean['Year Last Updated'].astype(int)
-# %%
 # The range of this column is 2009 to 2021
 print(df_clean['Year Last Updated'].max(), df_clean['Year Last Updated'].min())
 # %%
@@ -581,8 +575,6 @@ df_clean['Developer Website'].isna().sum()
 # We'll now create a separate column that will contain the presence or absence of 'Developer Website'
 # in the form of boolean (0 or 1/False or True) values.
 df_clean['has_developer_website'] = df_clean['Developer Website'].notna().astype(int)
-# %%
-# the new column is ready
 df_clean['has_developer_website'].head()
 # %%
 # Most apps do have a Developer Website, but the apps without a developer website are not less either
@@ -591,9 +583,6 @@ plt.xlabel("Has Developer Website")
 plt.ylabel("Number of Apps")
 plt.title("Number of apps with or without Developer Website")
 plt.show()
-# %%
-# sns.barplot(y='Rating', data=df_clean, hue='has_developer_website', palette="magma", color="yellow")
-# plt.xlim(0,5)
 # %%
 # Visualizing the content rating based on the category of apps through a treemap
 plt.figure(figsize=(4, 8))
@@ -611,8 +600,6 @@ fig.update_layout(
     height=500
 )
 fig.show()
-
-# %%
 # %%
 # Analysing the currency column
 currency_counts = df_clean['Currency'].value_counts()
@@ -661,12 +648,8 @@ def extract_and_round_up(version_string):
         # Return the original string in case of an exception
         return version_string
 
-# Apply the function to the 'Minimum Android' column
 df_clean['Minimum Android'] = df_clean['Minimum Android'].apply(extract_and_round_up)
-
-# Print the updated DataFrame
 print(df_clean['Minimum Android'])
-
  
 # %%
 #Visualising Minimum android Column
@@ -721,7 +704,6 @@ ax2.set_title('Rating by Minimum Android Version')
 ax2.set_xlabel('Minimum Android Version')
 ax2.set_ylabel('Rating')
 ax2.tick_params(axis='x', rotation=90)
-#Apps with 
 
 plt.show()
 
@@ -792,19 +774,18 @@ df_clean['Price_Status'].value_counts()
 # 
 # H_1: At least one pair of categories has a significant difference in mean number of installs.
 # %%
-# from scipy.stats import f_oneway
-# for category in df_clean['Category'] :
-#     anova_result = f_oneway(*[df_clean['Average Installs'][df_clean['Category'] == category] for category in df_clean['Category'].unique()])
+for category in df_clean['Category'] :
+    anova_result = f_oneway(*[df_clean['Average Installs'][df_clean['Category'] == category] for category in df_clean['Category'].unique()])
 
-#     # Print the ANOVA result
-#     print(f"ANOVA Result: %d",category)
-#     print("F-statistic:", anova_result.statistic)
-#     print("P-value:", anova_result.pvalue)
+    # Print the ANOVA result
+    print(f"ANOVA Result: %d",category)
+    print("F-statistic:", anova_result.statistic)
+    print("P-value:", anova_result.pvalue)
 
-#     if anova_result.pvalue < 0.05:
-#             print("The means of 'Average Installs' are significantly different among different categories.")
-#     else:
-#             print("There is no significant difference in the means of 'Average Installs' among different categories.")
+    if anova_result.pvalue < 0.05:
+            print("The means of 'Average Installs' are significantly different among different categories.")
+    else:
+            print("There is no significant difference in the means of 'Average Installs' among different categories.")
 # %%[markdown]
 # We get p_value < alpha for all the categories. So, we reject our H_0 and conclude that the different categories are significant.
 # 
@@ -815,7 +796,6 @@ df_clean['Price_Status'].value_counts()
 # %%
 t_test_price_min = stats.ttest_ind(df_clean[df_clean['Price_Status'] == 'Free']['Average Installs'],
                                 df_clean[df_clean['Price_Status'] == 'Paid']['Average Installs'])
-# %%
 t_test_price_min
 # We get an extremely small p_value, so we reject null and conclude that
 # there's a significant diff. b/w mean installs for price status
@@ -840,7 +820,6 @@ plt.show()
 # %%
 t_test_rating = stats.ttest_ind(df_clean[df_clean['Editors Choice'] == 0]['Rating'],
                                 df_clean[df_clean['Editors Choice'] == 1]['Rating'])
-# %%
 t_test_rating
 # An extremely low p_value, so we reject null yet again. 
 # There is a difference in the mean rating for whether and app is editor's choice or not.
@@ -858,10 +837,8 @@ plt.show()
 # %%
 t_test_install = stats.ttest_ind(df_clean[df_clean['Editors Choice'] == 0]['Average Installs'],
                                 df_clean[df_clean['Editors Choice'] == 1]['Average Installs'])
-# %%
 t_test_install
 # Also a smaller p-value, so we reject H_0 and there is a significant difference in the mean installs for editor's choice.
-
 
 # %%[markdown]
 # 5. Does app size affect the number of installs?
@@ -951,9 +928,7 @@ categorical_columns
 # %%
 lbl_content_rating=LabelEncoder()
 df_model_data['Content Rating']=lbl_content_rating.fit_transform(df_model_data['Content Rating'])
-#  %%
 df_model_data = df_model_data[df_model_data['Minimum Android'] != 'Varies with device']
-# %%
 lbl_category=LabelEncoder()
 df_model_data['Category']=lbl_category.fit_transform(df_model_data['Category'])
 # %%
@@ -964,7 +939,6 @@ def currency_to_INR(data):
     else:
         data=cc.convert(1,data,'INR')
     return data
-# %%
 df_model_data['Currency']=df_model_data['Currency'].apply(currency_to_INR)
 #  %%
 df_model_data.Price=df_model_data.Price*df_model_data.Currency
@@ -976,12 +950,8 @@ df_model_data['In App Purchases']=lbl_category.fit_transform(df_model_data['In A
 df_model_data['Editors Choice']=lbl_category.fit_transform(df_model_data['Editors Choice'])
 # %%
 df_model_data.drop(['Released','Last Updated','Currency'],inplace=True,axis=1)
-# %%
-df_model_data.head()
-# %%
-# #train_data.drop(['has_developer_website','Year Last Updated','Has_PrivacyPolicy','Month Released','Year Released'],inplace=True,axis=1)
-# %%
 df_model_data.drop(['App Name'], inplace=True, axis=1)
+df_model_data.head()
 # %%
 # df_model_data.dtypes
 df_model_data['Minimum Android'] = df_model_data['Minimum Android'].astype('int32')
@@ -1021,7 +991,7 @@ model_sgd.fit(train_X, train_Y)
 print('Train RMSE SGD Regression: ',mean_squared_error(train_Y, model_sgd.predict(train_X)))
 print('Test RMSE SGD Regression: ',mean_squared_error(test_Y, model_sgd.predict(test_X)))
 # %%[markdown]
-# We get a worse RMSE than the Linear model, it has now increased to 5.57 in train and 5.26 in test.
+# We get a worse RMSE than the Linear model, it has now increased to 5.41e+45 in train and 5.21e+45 in test.
 # Let's try using better models to bring it under 1. 
 
 # %%
@@ -1077,5 +1047,5 @@ print('Test RMSE LGBM Regression(Optimized): ',mean_squared_error(test_Y, bayesi
 # 
 # The finale RMSE Value achieved:
 # * Train RMSE: 0.1919
-# * Test RMSE : 0.1936
+# * Test RMSE : 0.1924
 # %%
