@@ -43,6 +43,8 @@ df.columns
 df.describe()
 # %%
 df.describe(include='O')
+
+#%%
 # %% [markdown]
 # We notice the count of app name and unique names doesn't match, so either there are duplicated values or missing values.
 # But we see app ID having all unique values. Let's see.
